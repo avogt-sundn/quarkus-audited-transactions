@@ -34,6 +34,7 @@ public class FruitResourceTest {
     final static String CHERRY_NAME = "Cherry";
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "changed";
+    final static String CHANGED_COLOR_2ND = "changed_2nd";
 
     @BeforeAll
     public static void enableLogging() {
@@ -178,6 +179,45 @@ public class FruitResourceTest {
                         "edited", Matchers.emptyOrNullString());
     }
 
+    @Test
+    @Order(10)
+    @DisplayName("create 2nd edited version")
+    public void changeCherryColor2nd() {
+
+        final Fruit baseFruit = given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getObject("active.ref", Fruit.class);
+        // now Change it with a put on /fruits/{id}
+        final Fruit copy = baseFruit.copy();
+        copy.color = CHANGED_COLOR_2ND;
+        // now also set as active version and use PUT
+        copy.active = true;
+        given().with().body(copy).contentType(ContentType.JSON)
+                .when().put("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(201)
+                .body(
+                        "name", equalTo(CHERRY_NAME),
+                        "color", equalTo(CHANGED_COLOR_2ND));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("check edited version after update")
+    public void checkNoEditedNow2nd() {
+        // do a GET to check values are still as they were returned on the PUT
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "edited", Matchers.emptyOrNullString(),
+                        "active.ref.name", equalTo(CHERRY_NAME),
+                        "active.ref.color", equalTo(CHANGED_COLOR_2ND)
+                );
+    }
 
     @Test
     @Order(13)
@@ -201,6 +241,7 @@ public class FruitResourceTest {
                         containsString("Apple"),
                         containsString("Banana"));
     }
+
 
     void createNew(Fruit fruit) {
         //List all, cherry should be missing now:
