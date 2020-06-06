@@ -62,7 +62,13 @@ public class FruitResource {
     @GET
     @Path("{id}")
     public Historized<Fruit> getSingle(@PathParam("id") UUID id) {
-        Optional<Historized<Fruit>> optional = repository.getSingle(id);
+        Optional<Historized<Fruit>> optional;
+        // history will never be deleted therefore we must do a find query to see if the entity currently still exists
+        if (entityManager.find(Fruit.class, id) == null) {
+            optional = Optional.empty();
+        } else {
+            optional = repository.getSingle(id);
+        }
         return optional.orElseThrow(()
                 -> new WebApplicationException("could not find object to given id: " + id, Response.Status.NOT_FOUND));
     }
@@ -134,7 +140,7 @@ public class FruitResource {
         if (uuid == null) {
             throw new WebApplicationException("Id was missing on request.", Response.Status.BAD_REQUEST);
         }
-        Fruit.delete("id", uuid);
+        entityManager.remove(entityManager.find(Fruit.class, uuid));
         return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 
@@ -143,12 +149,13 @@ public class FruitResource {
 
         @Override
         public Response toResponse(Exception exception) {
-            log.error("ErrorMapper: {}", exception);
             int code = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
+            // WebApplicationException will not produce stacktrace since its expected
             if (exception instanceof WebApplicationException) {
                 code = ((WebApplicationException) exception).getResponse().getStatus();
+            } else {
+                log.error("", exception);
             }
-
             return Response.status(code)
                     .entity(Json.createObjectBuilder().add("error", "" + exception.getMessage()).add("code", code).build())
                     .build();

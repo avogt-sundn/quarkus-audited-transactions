@@ -6,6 +6,7 @@ import org.acme.hibernate.orm.historized.Historized;
 import org.acme.hibernate.orm.panache.Fruit;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
@@ -52,6 +53,7 @@ public class HistorizedRepository<T> {
     public Optional<Historized<T>> getSingle(UUID id) {
         log.info("getSingle(id: " + id + ")");
 
+        
         // both active and edited entity can be null independently, so we have to load either way:
         Optional<History<T>> activeHistory = loadHistory(id, true, null);
         // if we have an active version, only consider the edited versions after theirs revision
@@ -77,18 +79,49 @@ public class HistorizedRepository<T> {
      * @return
      */
     private Optional<History<T>> loadHistory(UUID id, boolean active, Number mustBeHigherThan) {
+        // as soon as you use a projection the result will be the revision number
+        // we wont do a projection in order to get also the deleted entries
         AuditQuery auditQuery = reader.createQuery()
-                .forRevisionsOfEntity(this.clz, true, false)
+                .forRevisionsOfEntity(this.clz, false, true)
                 .add(AuditEntity.id().eq(id))
                 .add(AuditEntity.property("active").eq(active))
                 // the use of this projection leads the getSingleResult to return a Number containing the revision
-                .addProjection(AuditEntity.revisionNumber().max())
+                //.addProjection(AuditEntity.revisionNumber().max())
+                // get the highest revision number available by sorting descending plus limiting to 1 entity result
+                .addOrder(AuditEntity.revisionNumber().desc())
                 .setMaxResults(1);
 
         if (mustBeHigherThan != null) {
             auditQuery.add(AuditEntity.revisionNumber().ge(mustBeHigherThan));
         }
+        return readQuery(id, auditQuery);
 
+    }
+
+    private Optional<History<T>> readQuery(UUID id, AuditQuery auditQuery) {
+
+        Object[] result = null;
+        try {
+            Object singleResult = auditQuery.getSingleResult();
+            log.debug("singleResult={}", singleResult);
+            result = (Object[]) singleResult;
+        } catch (NoResultException e) {
+            result = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // need a final for the closures
+
+        return Optional.ofNullable(result).filter(ft -> !((RevisionType) ft[2]).equals(RevisionType.DEL))
+                .map(rs -> {
+                    final T t = (T) rs[0];
+                    final CustomRevisionEntity c = (CustomRevisionEntity) rs[1];
+                    final RevisionType rt = (RevisionType) rs[2];
+                    return new History<T>(t, c.getId(), c);
+                });
+    }
+
+    private Optional<History<T>> readProjection(UUID id, AuditQuery auditQuery) {
         // read the entity itself now
         Number found = null;
         try {
