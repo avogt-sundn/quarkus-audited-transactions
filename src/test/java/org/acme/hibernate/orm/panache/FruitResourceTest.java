@@ -2,13 +2,15 @@ package org.acme.hibernate.orm.panache;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -27,7 +29,10 @@ public class FruitResourceTest {
      * no assumptions about the contents of the database are made which makes it robust when
      * running in a suite with other QuarkusTest tests.
      */
-    final String toBeSafe = "b2f40a42-9748-4111-9b53-c205879d607e";
+    final static UUID CHERRY_UUID = UUID.randomUUID();
+    final static String CHERRY_NAME = "Cherry";
+    final static String CHERRY_COLOR = "red";
+    final static String CHANGED_COLOR = "changed";
 
     @BeforeAll
     public static void enableLogging() {
@@ -37,54 +42,120 @@ public class FruitResourceTest {
     }
 
     @Test
+    @Order(-1)
+    public void initialDataSet() {
+        createNew(new Fruit(CHERRY_UUID, true, CHERRY_NAME, CHERRY_COLOR));
+        createNew(new Fruit(UUID.randomUUID(), true, "Apple", "green"));
+        createNew(new Fruit(UUID.randomUUID(), true, "Banana", "yellow"));
+    }
+
+    @Test
     @Order(1)
-    public void checkTheImportResults() {
-        given()
-                .when().get("/fruits")
-                .then()
-                .statusCode(200)
-                // at least the import.sql entities should account for
-                .body("uuid", Matchers.iterableWithSize(Matchers.greaterThan(2)));
-        //List all, should have all 3 fruits the database has initially:
+    public void checkInitialDataSet() {
+
+        //List all, should have min. 3 fruits the database has initially:
         final String oneValidId = given()
                 .when().get("/fruits")
                 .then()
                 .statusCode(200)
                 .body(
-                        containsString("Cherry"),
+                        containsString(CHERRY_NAME),
                         containsString("Apple"),
                         containsString("Banana")
                 )
                 // 'find' is gpath special keyword introduncing a filter
                 // 'it' is a gpath special keyword referencing the current node
                 // 'name' and 'id' are the field names from the fruit class that got serialized to json
-                .extract().body().jsonPath().getString("find{ it.name == 'Banana' }.uuid");
+                .extract().body().jsonPath().getString("find{ it.name == '" + CHERRY_NAME + "' }.id");
 
-        Assertions.assertEquals(toBeSafe, oneValidId);
+        Assertions.assertEquals(CHERRY_UUID.toString(), oneValidId);
     }
 
     @Test
     @Order(2)
     public void getSingleFruit() {
         given()
-                .when().get("/fruits/" + toBeSafe)
+                .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
-                .body(containsString("Banana"));
+                .body(containsString("Cherry"));
     }
 
     @Test
-    @Order(3)
+    @Order(2)
+    public void getSingleNonExistentFruit() {
+        given()
+                .when().get("/fruits/" + UUID.randomUUID())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("update an entity")
+    public void changeCherry() {
+
+        final Fruit baseFruit = given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getObject("active.ref", Fruit.class);
+        // now Change it with a put on /fruits/{id}
+        final Fruit copy = baseFruit.copy();
+        copy.color = CHANGED_COLOR;
+        given().with().body(copy).contentType(ContentType.JSON)
+                .when().put("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(201)
+                .body(
+                        "name", equalTo(CHERRY_NAME),
+                        "color", equalTo(CHANGED_COLOR),
+                        "version", equalTo(baseFruit.version + 1));
+
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("active version unchanged by update")
+    public void checkActiveAfterChangeStillSame() {
+        // do a GET to check active version values are still unchanged
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "active.ref.name", equalTo(CHERRY_NAME),
+                        "active.ref.color", not(equalTo(CHANGED_COLOR)),
+                        "active.ref.color", equalTo(CHERRY_COLOR)
+                );
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("check edited version after update")
+    public void checkEdited() {
+        // do a GET to check values are still as they were returned on the PUT
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "edited.ref.name", equalTo("changed"),
+                        "edited.ref.color", equalTo(CHANGED_COLOR)
+                );
+    }
+
+    @Test
+    @Order(13)
     public void testDeleteSingleFruit() {
-        final String toBeDeleted = "b2f40a42-9748-4111-9b53-c205879d607b";
 
         //Delete the Cherry:
         given()
-                .when().delete("/fruits/" + toBeDeleted)
+                .when().delete("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(204);
         given()
-                .when().get("/fruits/" + toBeDeleted)
+                .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(404);
         given()
@@ -97,50 +168,13 @@ public class FruitResourceTest {
                         containsString("Banana"));
     }
 
-    @Test
-    @Order(4)
-    public void change() {
-        // we use the fruit we know is there due to import.sql, with the uuid 'toBeChanged'
-        final String toBeChanged = "b2f40a42-9748-4111-9b53-c205879d607c";
-
-        final Fruit baseVersion = given()
-                .when().get("/fruits/" + toBeChanged)
-                .then()
-                .statusCode(200)
-                .extract().body().as(Fruit.class);
-
-        // now Change it with a put on /fruits/{id}
-        final Fruit copy = baseVersion.copy();
-        copy.name = "changed";
-        given().with().body(copy).contentType(ContentType.JSON)
-                .when().put("/fruits/" + toBeChanged)
-                .then()
-                .statusCode(201)
-                .body(
-                        "name", equalTo(copy.name),
-                        "color", equalTo(copy.color),
-                        "version", equalTo(baseVersion.version + 1));
-
-        // do a GET to check values are still as they were returned on the PUT
-        given()
-                .when().get("/fruits/" + toBeChanged)
-                .then()
-                .statusCode(200)
-                .body(
-                        "name", equalTo("changed"),
-                        "color", equalTo(copy.color),
-                        "version", equalTo(baseVersion.version + 1));
-    }
-
-    @Test
-    @Order(5)
-    public void createNew() {
+    void createNew(Fruit fruit) {
         //List all, cherry should be missing now:
-        given().with().body(new Fruit("name")).contentType(ContentType.JSON)
+        given().with().body(fruit).contentType(ContentType.JSON)
                 .when().post("/fruits")
                 .then()
                 .statusCode(201)
-                .extract().body().as(Fruit.class).getName().equals("name");
+                .extract().body().as(Fruit.class).getName().equals(fruit.name);
     }
 
 

@@ -34,12 +34,13 @@ public class AuditResourceTest {
     @DisplayName("create test target")
     @Order(1)
     public void createNew() {
+
         // create a Fruit that the test can work with
-        given().with().body(new Fruit(TEST_TARGET_UUID, FIRST_VALUE)).contentType(ContentType.JSON)
+        given().with().body(new Fruit(TEST_TARGET_UUID, true, FIRST_VALUE, "color")).contentType(ContentType.JSON)
                 .when().post("/fruits")
                 .then()
                 .statusCode(201).body("name", Matchers.equalTo(FIRST_VALUE),
-                "uuid", Matchers.equalTo(TEST_TARGET_UUID.toString()));
+                "uuid", Matchers.equalTo(TEST_TARGET_UUID).toString());
     }
 
     @Test
@@ -93,7 +94,7 @@ public class AuditResourceTest {
 
     private void change(String newName) {
 
-        // we use the fruit we know is there due to import.sql, with the uuid 'toBeChanged'
+        // we use the fruit we know is there due to initial data set, with the uuid 'toBeChanged'
         final Fruit baseVersion = RestAssured.given()
                 .when().get("/fruits/" + TEST_TARGET_UUID)
                 .then()
