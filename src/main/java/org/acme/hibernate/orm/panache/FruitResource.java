@@ -1,7 +1,7 @@
 package org.acme.hibernate.orm.panache;
 
-import io.quarkus.hibernate.orm.panache.Panache;
 import lombok.extern.slf4j.Slf4j;
+import org.acme.hibernate.orm.envers.BeanMerge;
 import org.acme.hibernate.orm.envers.HistorizedRepository;
 import org.acme.hibernate.orm.envers.HistoryList;
 import org.acme.hibernate.orm.historized.Historized;
@@ -15,6 +15,7 @@ import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -39,9 +40,11 @@ import java.util.UUID;
 public class FruitResource {
 
     HistorizedRepository<Fruit> repository;
+    EntityManager entityManager;
 
     @Inject
     public FruitResource(EntityManager entityManager) {
+        this.entityManager = entityManager;
         this.repository = new HistorizedRepository<>(Fruit.class, entityManager);
     }
 
@@ -104,7 +107,23 @@ public class FruitResource {
         }
         fruit.id = id;
         // merge will replace all stored values with the ones received - null will overwrite!
-        Fruit merged = Panache.getEntityManager().merge(fruit);
+        Fruit merged = entityManager.merge(fruit);
+        return Response.ok(merged).status(Response.Status.CREATED).build();
+    }
+
+    @PATCH
+    @Path("{id}")
+    @Transactional
+    public Response partialUpdate(@PathParam("id") UUID id, Fruit fruit) {
+        if (id == null) {
+            throw new WebApplicationException("uuid was missing on request.", Response.Status.BAD_REQUEST);
+        }
+        // the id in the path param is authoritative, ignore any id in the body
+        fruit.id = id;
+        final Fruit fruitFromDatabase = entityManager.find(Fruit.class, id);
+        BeanMerge.merge(fruitFromDatabase, fruit);
+        // merge will replace all stored values with the ones received - null will overwrite!
+        Fruit merged = entityManager.merge(fruitFromDatabase);
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 

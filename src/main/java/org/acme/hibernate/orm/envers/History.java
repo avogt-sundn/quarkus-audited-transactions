@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 public class History<T> {
     @NonNull
     T ref;
+    @NonNull
     Number revision;
     CustomRevisionEntity info;
 }

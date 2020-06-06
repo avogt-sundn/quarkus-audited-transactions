@@ -14,7 +14,6 @@ import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Version;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -40,11 +39,8 @@ public class Fruit extends PanacheEntityBase implements Historizable {
     @NonNull
     boolean active;
 
-    @Version
-    public int version;
-
     @Column(length = 40, unique = true)
-    @javax.validation.constraints.NotNull
+//    @javax.validation.constraints.NotNull
     @NonNull
     public String name;
     @NonNull
@@ -53,7 +49,6 @@ public class Fruit extends PanacheEntityBase implements Historizable {
     public Fruit copy() {
         Fruit fruit = new Fruit();
         fruit.id = id;
-        fruit.version = version;
         fruit.name = name;
         fruit.color = color;
         return fruit;

@@ -2,6 +2,7 @@ package org.acme.hibernate.orm.panache;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -78,7 +79,12 @@ public class FruitResourceTest {
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
-                .body(containsString("Cherry"));
+                .body("active.ref.name", equalTo("Cherry"),
+                        "active.info.id", Matchers.greaterThanOrEqualTo(1),
+                        "active.revision", Matchers.greaterThanOrEqualTo(1)
+
+
+                );
     }
 
     @Test
@@ -92,8 +98,8 @@ public class FruitResourceTest {
 
     @Test
     @Order(4)
-    @DisplayName("update an entity")
-    public void changeCherry() {
+    @DisplayName("create edited version")
+    public void changeCherryColor() {
 
         final Fruit baseFruit = given()
                 .when().get("/fruits/" + CHERRY_UUID)
@@ -109,9 +115,7 @@ public class FruitResourceTest {
                 .statusCode(201)
                 .body(
                         "name", equalTo(CHERRY_NAME),
-                        "color", equalTo(CHANGED_COLOR),
-                        "version", equalTo(baseFruit.version + 1));
-
+                        "color", equalTo(CHANGED_COLOR));
     }
 
     @Test
@@ -133,17 +137,47 @@ public class FruitResourceTest {
     @Test
     @Order(6)
     @DisplayName("check edited version after update")
-    public void checkEdited() {
+    public void checkEditedIsThere() {
         // do a GET to check values are still as they were returned on the PUT
         given()
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
                 .body(
-                        "edited.ref.name", equalTo("changed"),
+                        "edited.ref.name", equalTo(CHERRY_NAME),
                         "edited.ref.color", equalTo(CHANGED_COLOR)
                 );
     }
+
+
+    @Test
+    @Order(8)
+    @DisplayName("new active version")
+    public void newActiveCherryWithEditedColor() {
+
+        given().with().body("{\"active\":true}").contentType(ContentType.JSON)
+                .when().patch("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(201)
+                .body(
+                        "name", equalTo(CHERRY_NAME),
+                        "color", equalTo(CHANGED_COLOR)
+                );
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("check edited version after update")
+    public void checkNoEditedNow() {
+        // do a GET to check values are still as they were returned on the PUT
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "edited", Matchers.emptyOrNullString());
+    }
+
 
     @Test
     @Order(13)

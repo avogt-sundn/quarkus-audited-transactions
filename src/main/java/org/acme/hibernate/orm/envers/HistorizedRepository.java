@@ -11,6 +11,7 @@ import org.hibernate.envers.query.AuditQuery;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +43,7 @@ public class HistorizedRepository<T> {
     /**
      * Fetch single entity to a given id.
      * The result contains the newest active version and the newest edited version if they exist.
+     * Both can be null independent from each other.
      *
      * @param id - primary key
      * @return - Optional with Historized wrapper containing the entity to the given id.
@@ -50,17 +52,60 @@ public class HistorizedRepository<T> {
     public Optional<Historized<T>> getSingle(UUID id) {
         log.info("getSingle(id: " + id + ")");
 
+        // both active and edited entity can be null independently, so we have to load either way:
+        Optional<History<T>> activeHistory = loadHistory(id, true, null);
+        // if we have an active version, only consider the edited versions after theirs revision
+        Optional<History<T>> editedHistory = loadHistory(id, false,
+                activeHistory.map(h -> h.revision).orElse(null));
+
+        if (activeHistory.orElse(editedHistory.orElse(null)) != null) {
+
+            return Optional.of(new Historized<T>(
+                    activeHistory.orElse(null),
+                    editedHistory.orElse(null),
+                    null));
+        }
+        return Optional.ofNullable(null);
+    }
+
+    /**
+     * fetch to the id, latest revision, active status
+     *
+     * @param id
+     * @param active
+     * @param mustBeHigherThan
+     * @return
+     */
+    private Optional<History<T>> loadHistory(UUID id, boolean active, Number mustBeHigherThan) {
         AuditQuery auditQuery = reader.createQuery()
                 .forRevisionsOfEntity(this.clz, true, false)
-                .addProjection(AuditEntity.revisionNumber().max())
                 .add(AuditEntity.id().eq(id))
-                .add(AuditEntity.property("active").eq(Boolean.TRUE));
-        // returns null if no entity was found
-        Number found = (Number) auditQuery.getSingleResult();
-        Optional<Number> revision = Optional.ofNullable(found);
-        Optional<Historized<T>> result = revision
-                .map(r -> reader.find(this.clz, id, found))
-                .map(f -> new Historized(new History(f)));
-        return result;
+                .add(AuditEntity.property("active").eq(active))
+                // the use of this projection leads the getSingleResult to return a Number containing the revision
+                .addProjection(AuditEntity.revisionNumber().max())
+                .setMaxResults(1);
+
+        if (mustBeHigherThan != null) {
+            auditQuery.add(AuditEntity.revisionNumber().ge(mustBeHigherThan));
+        }
+
+        // read the entity itself now
+        Number found = null;
+        try {
+            Object singleResult = auditQuery.getSingleResult();
+            log.debug("singleResult={}", singleResult);
+            found = (Number) singleResult;
+        } catch (NoResultException e) {
+            found = null;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // need a final for the closures
+        final Number searchForRevisionNumber = found;
+        return Optional.ofNullable(searchForRevisionNumber)
+                .map(r -> reader.find(this.clz, id, searchForRevisionNumber))
+                .<History<T>>map(f -> new History<T>(f, searchForRevisionNumber,
+                        reader.findRevision(CustomRevisionEntity.class, searchForRevisionNumber)));
     }
+
 }
