@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.panache;
+package org.acme.hibernate.envers.panache;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -76,15 +76,33 @@ public class FruitResourceTest {
     @Test
     @Order(2)
     public void getSingleFruit() {
+        final String fullResponseBody =
+                "{\n" +
+                        "    \"active\": {\n" +
+                        "        \"info\": {\n" +
+                        "            \"id\": 1,\n" +
+                        "            \"revisionDate\": \"2020-06-06T19:39:56\",\n" +
+                        "            \"timestamp\": 1591472396218,\n" +
+                        "            \"username\": \"your-name-Sat Jun 06 21:39:56 CEST 2020\"\n" +
+                        "        },\n" +
+                        "        \"ref\": {\n" +
+                        "            \"active\": true,\n" +
+                        "            \"color\": \"red\",\n" +
+                        "            \"id\": \"a309e0bd-5181-4521-9e3c-e57b4eafe404\",\n" +
+                        "            \"name\": \"Cherry\"\n" +
+                        "        },\n" +
+                        "        \"revision\": 1\n" +
+                        "    },\n" +
+                        "    \"fetchDate\": \"2020-06-06T21:39:57\"\n" +
+                        "}";
         given()
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
                 .body("active.ref.name", equalTo("Cherry"),
-                        "active.info.id", Matchers.greaterThanOrEqualTo(1),
-                        "active.revision", Matchers.greaterThanOrEqualTo(1)
-
-
+                        "active.revision", equalTo(1),
+                        "active.info.id", equalTo(1),
+                        "fetchDate", not(Matchers.emptyOrNullString())
                 );
     }
 

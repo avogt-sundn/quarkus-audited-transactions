@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.envers;
+package org.acme.hibernate.envers.historized.impl;
 
 import org.hibernate.envers.DefaultRevisionEntity;
 import org.hibernate.envers.RevisionEntity;

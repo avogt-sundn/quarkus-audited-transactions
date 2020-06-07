@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.panache;
+package org.acme.hibernate.envers.panache;
 
 import io.quarkus.test.junit.NativeImageTest;
 

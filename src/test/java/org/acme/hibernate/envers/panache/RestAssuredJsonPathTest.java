@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.panache;
+package org.acme.hibernate.envers.panache;
 
 
 import io.restassured.path.json.JsonPath;

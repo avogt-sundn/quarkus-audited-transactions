@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.envers;
+package org.acme.hibernate.envers.historized.impl;
 
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;

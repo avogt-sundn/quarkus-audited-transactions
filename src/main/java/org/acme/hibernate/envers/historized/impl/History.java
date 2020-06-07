@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.envers;
+package org.acme.hibernate.envers.historized.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

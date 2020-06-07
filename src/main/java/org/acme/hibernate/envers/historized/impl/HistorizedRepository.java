@@ -1,9 +1,9 @@
-package org.acme.hibernate.orm.envers;
+package org.acme.hibernate.envers.historized.impl;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.acme.hibernate.orm.historized.Historized;
-import org.acme.hibernate.orm.panache.Fruit;
+import org.acme.hibernate.envers.historized.api.Historized;
+import org.acme.hibernate.envers.panache.Fruit;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
@@ -51,9 +51,7 @@ public class HistorizedRepository<T> {
      * - Optional with value null if the id is not present.
      */
     public Optional<Historized<T>> getSingle(UUID id) {
-        log.info("getSingle(id: " + id + ")");
 
-        
         // both active and edited entity can be null independently, so we have to load either way:
         Optional<History<T>> activeHistory = loadHistory(id, true, null);
         // if we have an active version, only consider the edited versions after theirs revision

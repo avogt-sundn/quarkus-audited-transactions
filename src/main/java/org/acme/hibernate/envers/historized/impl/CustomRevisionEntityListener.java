@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.envers;
+package org.acme.hibernate.envers.historized.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.envers.RevisionListener;

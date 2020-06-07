@@ -1,4 +1,4 @@
-package org.acme.hibernate.orm.panache;
+package org.acme.hibernate.envers.panache;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.acme.hibernate.orm.historized.Historizable;
+import org.acme.hibernate.envers.historized.api.Historizable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Cacheable;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Audited
 @RegisterForReflection
-public class Fruit extends PanacheEntityBase implements Historizable {
+public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     /**
      * the primary key is taken from here. do not rename the field!
@@ -52,5 +52,10 @@ public class Fruit extends PanacheEntityBase implements Historizable {
         fruit.name = name;
         fruit.color = color;
         return fruit;
+    }
+
+    @Override
+    public void generateId() {
+        this.id = UUID.randomUUID();
     }
 }
