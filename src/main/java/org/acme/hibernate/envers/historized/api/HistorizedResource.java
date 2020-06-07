@@ -2,7 +2,6 @@ package org.acme.hibernate.envers.historized.api;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.acme.hibernate.envers.historized.impl.BeanMerge;
 import org.acme.hibernate.envers.historized.impl.HistorizedRepository;
 import org.acme.hibernate.envers.historized.impl.HistoryList;
 
@@ -22,7 +21,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * @param <T> Entity type
@@ -31,8 +29,8 @@ import java.util.UUID;
 @Slf4j
 @NoArgsConstructor
 public class HistorizedResource<T extends Historizable<I>, I> {
-    HistorizedRepository<T> repository;
-    EntityManager entityManager;
+
+    HistorizedRepository<T, I> repository;
     Class<T> clazz;
 
     /**
@@ -44,34 +42,28 @@ public class HistorizedResource<T extends Historizable<I>, I> {
      */
     public HistorizedResource(Class<T> clazz, EntityManager entityManager) {
         this.clazz = clazz;
-        this.entityManager = entityManager;
         this.repository = new HistorizedRepository<>(clazz, entityManager);
     }
 
     @GET
     @Path("{id}/revisions")
-    public HistoryList<T> getRevisions(@PathParam("id") UUID id) {
+    public HistoryList<T> getRevisions(@PathParam("id") I id) {
         return repository.getList(id);
     }
 
     @GET
     @Path("{id}")
-    public Historized<T> getSingle(@PathParam("id") UUID id) {
-        Optional<Historized<T>> optional;
-        // history will never be deleted therefore we must do a find query to see if the entity currently still exists
-        if (entityManager.find(clazz, id) == null) {
-            optional = Optional.empty();
-        } else {
-            optional = repository.getSingle(id);
-        }
+    public Historized<T> getSingle(@PathParam("id") I id) {
+
+        Optional<Historized<T>> optional = repository.getSingle(id);
         return optional.orElseThrow(()
                 -> new WebApplicationException("could not find object to given id: " + id, Response.Status.NOT_FOUND));
     }
 
     /**
      * POST /Ts - receives a T to store as new T
-     * - uuid of the new object can be set by the client
-     * - if not present, uuid will be generated
+     * - I of the new object can be set by the client
+     * - if not present, I will be generated
      * - body is expected to be valid T json
      *
      * @param t - the T data to be stored
@@ -84,14 +76,13 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         if (t.getId() == null) {
             t.generateId();
         }
-
-        entityManager.persist(t);
+        repository.persist(t);
         return Response.ok(t).status(Response.Status.CREATED).build();
     }
 
     /**
      * PUT /T/{id} - receives a T as an update to an already stored T
-     * - uuid is expected on the url path
+     * - I is expected on the url path
      * - body is expected to be valid T json
      *
      * @param id
@@ -103,11 +94,11 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @Transactional
     public Response addOrUpdate(@PathParam("id") I id, @Valid T t) {
         if (id == null) {
-            throw new WebApplicationException("uuid was missing on request.", Response.Status.BAD_REQUEST);
+            throw new WebApplicationException("I was missing on request.", Response.Status.BAD_REQUEST);
         }
         t.setId(id);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = entityManager.merge(t);
+        T merged = repository.merge(t);
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 
@@ -116,25 +107,23 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @Transactional
     public Response partialUpdate(@PathParam("id") I id, T t) {
         if (id == null) {
-            throw new WebApplicationException("uuid was missing on request.", Response.Status.BAD_REQUEST);
+            throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
         // the id in the path param is authoritative, ignore any id in the body
         t.setId(id);
-        final T TFromDatabase = entityManager.find(clazz, id);
-        BeanMerge.merge(TFromDatabase, t);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = entityManager.merge(TFromDatabase);
+        T merged = repository.partialUpdate(id, t);
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 
     @DELETE
     @Path("{id}")
     @Transactional
-    public Response deleteSingle(@PathParam("id") I uuid) {
-        if (uuid == null) {
-            throw new WebApplicationException("Id was missing on request.", Response.Status.BAD_REQUEST);
+    public Response deleteSingle(@PathParam("id") I I) {
+        if (I == null) {
+            throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
-        entityManager.remove(entityManager.find(clazz, uuid));
+        repository.delete(I);
         return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 

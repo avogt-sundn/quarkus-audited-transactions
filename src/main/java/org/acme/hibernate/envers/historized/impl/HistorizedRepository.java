@@ -2,6 +2,7 @@ package org.acme.hibernate.envers.historized.impl;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
 import org.acme.hibernate.envers.panache.Fruit;
 import org.hibernate.envers.AuditReader;
@@ -15,21 +16,22 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class HistorizedRepository<T> {
+public class HistorizedRepository<T extends Historizable<I>, I> {
 
     private final Class<T> clz;
     private final AuditReader reader;
+    private final EntityManager entityManager;
 
     public HistorizedRepository(Class<T> clz, EntityManager entityManager) {
         this.reader = AuditReaderFactory.get(entityManager);
         this.clz = clz;
+        this.entityManager = entityManager;
     }
 
-    public HistoryList<T> getList(@PathParam("id") UUID id) {
+    public HistoryList<T> getList(@PathParam("id") I id) {
         List<Number> revisions = reader.getRevisions(Fruit.class, id);
         List<History<T>> collect = revisions.stream().map(
                 rev -> new History<T>(
@@ -50,7 +52,12 @@ public class HistorizedRepository<T> {
      * @return - Optional with Historized wrapper containing the entity to the given id.
      * - Optional with value null if the id is not present.
      */
-    public Optional<Historized<T>> getSingle(UUID id) {
+    public Optional<Historized<T>> getSingle(I id) {
+
+        // history will never be deleted therefore we must do a find query to see if the entity currently still exists
+        if (entityManager.find(clz, id) == null) {
+            return Optional.empty();
+        }
 
         // both active and edited entity can be null independently, so we have to load either way:
         Optional<History<T>> activeHistory = loadHistory(id, true, null);
@@ -76,7 +83,7 @@ public class HistorizedRepository<T> {
      * @param mustBeHigherThan
      * @return
      */
-    private Optional<History<T>> loadHistory(UUID id, boolean active, Number mustBeHigherThan) {
+    private Optional<History<T>> loadHistory(I id, boolean active, Number mustBeHigherThan) {
         // as soon as you use a projection the result will be the revision number
         // we wont do a projection in order to get also the deleted entries
         AuditQuery auditQuery = reader.createQuery()
@@ -96,7 +103,7 @@ public class HistorizedRepository<T> {
 
     }
 
-    private Optional<History<T>> readQuery(UUID id, AuditQuery auditQuery) {
+    private Optional<History<T>> readQuery(I id, AuditQuery auditQuery) {
 
         Object[] result = null;
         try {
@@ -119,24 +126,23 @@ public class HistorizedRepository<T> {
                 });
     }
 
-    private Optional<History<T>> readProjection(UUID id, AuditQuery auditQuery) {
-        // read the entity itself now
-        Number found = null;
-        try {
-            Object singleResult = auditQuery.getSingleResult();
-            log.debug("singleResult={}", singleResult);
-            found = (Number) singleResult;
-        } catch (NoResultException e) {
-            found = null;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // need a final for the closures
-        final Number searchForRevisionNumber = found;
-        return Optional.ofNullable(searchForRevisionNumber)
-                .map(r -> reader.find(this.clz, id, searchForRevisionNumber))
-                .<History<T>>map(f -> new History<T>(f, searchForRevisionNumber,
-                        reader.findRevision(CustomRevisionEntity.class, searchForRevisionNumber)));
+    public void persist(T t) {
+        entityManager.persist(t);
     }
 
+    public T merge(T t) {
+        return entityManager.merge(t);
+    }
+
+    public <I> T partialUpdate(I id, T t) {
+        final T fromDatabase = entityManager.find(clz, id);
+        BeanMerge.merge(fromDatabase, t);
+        // merge will replace all stored values with the ones received - null will overwrite!
+        T merged = entityManager.merge(fromDatabase);
+        return merged;
+    }
+
+    public <I> void delete(I id) {
+        entityManager.remove(entityManager.find(clz, id));
+    }
 }
