@@ -4,7 +4,6 @@ package org.acme.hibernate.envers.historized.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
-import org.acme.hibernate.envers.panache.Fruit;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
@@ -32,10 +31,10 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     public HistoryList<T> getList(@PathParam("id") I id) {
-        List<Number> revisions = reader.getRevisions(Fruit.class, id);
+        List<Number> revisions = reader.getRevisions(this.clz, id);
         List<History<T>> collect = revisions.stream().map(
                 rev -> new History<T>(
-                        reader.find((Class<T>) clz, (Object) id, rev),
+                        reader.find((Class<T>) this.clz, (Object) id, rev),
                         rev,
                         reader.findRevision(CustomRevisionEntity.class, rev)
                 )
