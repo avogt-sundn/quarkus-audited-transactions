@@ -12,8 +12,6 @@ import org.acme.hibernate.envers.historized.api.Historizable;
 import org.hibernate.envers.Audited;
 
 import javax.json.bind.annotation.JsonbTransient;
-import javax.persistence.Access;
-import javax.persistence.AccessType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
@@ -26,7 +24,6 @@ import java.util.UUID;
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
-@Access(AccessType.FIELD)
 public class NutritionValue extends PanacheEntityBase implements Historizable<UUID> {
     /**
      * the primary key is taken from here. do not rename the field!
