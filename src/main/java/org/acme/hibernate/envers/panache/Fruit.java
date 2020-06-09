@@ -1,7 +1,6 @@
 package org.acme.hibernate.envers.panache;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -11,9 +10,16 @@ import org.acme.hibernate.envers.historized.api.Historizable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Cacheable;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
@@ -23,7 +29,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Audited
-@RegisterForReflection
 public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     /**
@@ -31,7 +36,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      */
     @Id
     @NonNull
-    public UUID id;
+    UUID id;
     /**
      * only active entities are fetched by queries, representing a current state at one point in time.
      * if active is false, this entity is an edited version.
@@ -39,14 +44,17 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @NonNull
     boolean active;
 
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    Set<NutritionValue> values;
+
     @Column(length = 40, unique = true)
 //    @javax.validation.constraints.NotNull
     @NonNull
-    public String name;
+    String name;
     @NonNull
-    public String color;
+    String color;
 
-    public Fruit copy() {
+    Fruit copy() {
         Fruit fruit = new Fruit();
         fruit.id = id;
         fruit.name = name;
@@ -57,5 +65,14 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @Override
     public void generateId() {
         this.id = UUID.randomUUID();
+    }
+
+    public void addNutritions(NutritionValue... val) {
+        if (null == this.values) {
+            this.values = new HashSet<NutritionValue>();
+        }
+        List<NutritionValue> nutritionValues = Arrays.asList(val);
+        this.values.addAll(nutritionValues);
+        nutritionValues.stream().forEach(v -> v.setFruit(this));
     }
 }

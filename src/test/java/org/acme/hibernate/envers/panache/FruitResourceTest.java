@@ -35,6 +35,7 @@ public class FruitResourceTest {
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "changed";
     final static String CHANGED_COLOR_2ND = "changed_2nd";
+    public static final String NUTRI_NAME = "x";
 
     @BeforeAll
     public static void enableLogging() {
@@ -46,7 +47,9 @@ public class FruitResourceTest {
     @Test
     @Order(-1)
     public void initialDataSet() {
-        createNew(new Fruit(CHERRY_UUID, true, CHERRY_NAME, CHERRY_COLOR));
+        Fruit fruit = new Fruit(CHERRY_UUID, true, CHERRY_NAME, CHERRY_COLOR);
+        fruit.addNutritions(new NutritionValue(UUID.randomUUID(), true, NUTRI_NAME, "y"));
+        createNew(fruit);
         createNew(new Fruit(UUID.randomUUID(), true, "Apple", "green"));
         createNew(new Fruit(UUID.randomUUID(), true, "Banana", "yellow"));
     }
@@ -60,7 +63,7 @@ public class FruitResourceTest {
                 .when().get("/fruits")
                 .then()
                 .statusCode(200)
-                .body(
+                .body(containsString(NUTRI_NAME),
                         containsString(CHERRY_NAME),
                         containsString("Apple"),
                         containsString("Banana")
@@ -100,8 +103,8 @@ public class FruitResourceTest {
                 .then()
                 .statusCode(200)
                 .body("active.ref.name", equalTo("Cherry"),
-                        "active.revision", equalTo(1),
-                        "active.info.id", equalTo(1),
+                        "active.revision", Matchers.greaterThanOrEqualTo(1),
+                        "active.info.id", Matchers.greaterThanOrEqualTo(1),
                         "fetchDate", not(Matchers.emptyOrNullString())
                 );
     }
