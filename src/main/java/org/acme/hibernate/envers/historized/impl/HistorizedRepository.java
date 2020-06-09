@@ -134,6 +134,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     public <I> T partialUpdate(I id, T t) {
+        // FIXME: against which version do we want to merge? active or edited?
         final T fromDatabase = entityManager.find(clz, id);
         BeanMerge.merge(fromDatabase, t);
         // merge will replace all stored values with the ones received - null will overwrite!

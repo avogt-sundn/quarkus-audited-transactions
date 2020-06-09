@@ -131,6 +131,8 @@ public class FruitResourceTest {
         // now Change it with a put on /fruits/{id}
         final Fruit copy = baseFruit.copy();
         copy.color = CHANGED_COLOR;
+        //NutritionValue[] nutritionValues = copy.values.toArray(new NutritionValue[]{});
+        //nutritionValues[0].name = CHANGED_COLOR;
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
                 .then()

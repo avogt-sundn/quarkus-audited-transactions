@@ -51,4 +51,12 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
         this.id = UUID.randomUUID();
     }
 
+    public NutritionValue copy() {
+        NutritionValue nutritionValue = new NutritionValue();
+        nutritionValue.id = this.id;
+        nutritionValue.active = this.active;
+        nutritionValue.name = this.name;
+        nutritionValue.value = this.value;
+        return nutritionValue;
+    }
 }

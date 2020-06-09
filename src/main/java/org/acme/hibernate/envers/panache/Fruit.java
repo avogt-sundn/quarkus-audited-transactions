@@ -19,8 +19,11 @@ import javax.persistence.OneToMany;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -43,8 +46,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      */
     @NonNull
     boolean active;
-
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(cascade = {CascadeType.ALL, CascadeType.MERGE}, fetch = FetchType.EAGER)
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
@@ -59,6 +61,9 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         fruit.id = id;
         fruit.name = name;
         fruit.color = color;
+        // if there is a set, copy values into a new set and set reference to the new fruit
+        fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
+                .map(n -> n.copy()).peek(n -> n.fruit = fruit).collect(Collectors.toSet());
         return fruit;
     }
 

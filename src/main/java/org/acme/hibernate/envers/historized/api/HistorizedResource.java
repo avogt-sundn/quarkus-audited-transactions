@@ -81,7 +81,9 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     }
 
     /**
-     * PUT /T/{id} - receives a T as an update to an already stored T
+     * PUT /T/{id} - receives a T as an overwriting update to an already stored T.
+     * null values in the received T will overwrite any value present in the persistence.
+     * If you want to merge only selected values, use PATCH instead.
      * - I is expected on the url path
      * - body is expected to be valid T json
      *
@@ -102,6 +104,14 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 
+    /**
+     * PATCH is like PUT, but allows for partially filled T.
+     * The filled values are then merged into the already existent T entity.
+     *
+     * @param id
+     * @param t
+     * @return
+     */
     @PATCH
     @Path("{id}")
     @Transactional
