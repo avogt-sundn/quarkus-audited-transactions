@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Entity
 @Cacheable
 @Data
@@ -46,7 +46,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      */
     @NonNull
     boolean active;
-    @OneToMany(cascade = {CascadeType.ALL, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "fruits")
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
@@ -63,7 +63,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         fruit.color = color;
         // if there is a set, copy values into a new set and set reference to the new fruit
         fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
-                .map(n -> n.copy()).peek(n -> n.fruit = fruit).collect(Collectors.toSet());
+                .map(n -> n.copy()).peek(n -> n.fruits = fruit).collect(Collectors.toSet());
         return fruit;
     }
 
@@ -78,6 +78,6 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         }
         List<NutritionValue> nutritionValues = Arrays.asList(val);
         this.values.addAll(nutritionValues);
-        nutritionValues.stream().forEach(v -> v.setFruit(this));
+        nutritionValues.stream().forEach(v -> v.setFruits(this));
     }
 }

@@ -130,7 +130,10 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     public T merge(T t) {
-        return entityManager.merge(t);
+        log.info("      merge: {}", t);
+        T merge = entityManager.merge(t);
+        log.info("after merge: {}", merge);
+        return merge;
     }
 
     public <I> T partialUpdate(I id, T t) {

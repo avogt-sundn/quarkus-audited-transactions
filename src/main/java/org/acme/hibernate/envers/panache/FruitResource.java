@@ -43,8 +43,24 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
     @Override
     public Response add(@Valid final Fruit fruit) {
         Optional.ofNullable(fruit.values).stream().forEach(set -> set.stream().forEach(nu -> {
-            nu.fruit = fruit;
+            nu.fruits = fruit;
         }));
         return super.add(fruit);
+    }
+
+    @Override
+    public Response addOrUpdate(UUID id, @Valid Fruit fruit) {
+        Optional.ofNullable(fruit.values).stream().forEach(set -> set.stream().forEach(nu -> {
+            nu.fruits = fruit;
+        }));
+        return super.addOrUpdate(id, fruit);
+    }
+
+    @Override
+    public Response partialUpdate(UUID id, Fruit fruit) {
+        Optional.ofNullable(fruit.values).stream().forEach(set -> set.stream().forEach(nu -> {
+            nu.fruits = fruit;
+        }));
+        return super.partialUpdate(id, fruit);
     }
 }

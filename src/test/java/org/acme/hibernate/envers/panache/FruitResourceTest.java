@@ -33,9 +33,9 @@ public class FruitResourceTest {
     final static UUID CHERRY_UUID = UUID.randomUUID();
     final static String CHERRY_NAME = "Cherry";
     final static String CHERRY_COLOR = "red";
-    final static String CHANGED_COLOR = "changed";
-    final static String CHANGED_COLOR_2ND = "changed_2nd";
-    public static final String NUTRI_NAME = "x";
+    final static String CHANGED_COLOR = "_changed";
+    final static String CHANGED_COLOR_2ND = "_changed_2nd";
+    public static final String NUTRI_NAME = "_not_changed_yet";
 
     @BeforeAll
     public static void enableLogging() {
@@ -131,15 +131,16 @@ public class FruitResourceTest {
         // now Change it with a put on /fruits/{id}
         final Fruit copy = baseFruit.copy();
         copy.color = CHANGED_COLOR;
-        //NutritionValue[] nutritionValues = copy.values.toArray(new NutritionValue[]{});
-        //nutritionValues[0].name = CHANGED_COLOR;
+        NutritionValue[] nutritionValues = copy.values.toArray(new NutritionValue[]{});
+        nutritionValues[0].name = CHANGED_COLOR;
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(201)
                 .body(
                         "name", equalTo(CHERRY_NAME),
-                        "color", equalTo(CHANGED_COLOR));
+                        "color", equalTo(CHANGED_COLOR),
+                        "values[0].name", equalTo(CHANGED_COLOR));
     }
 
     @Test
@@ -153,7 +154,6 @@ public class FruitResourceTest {
                 .statusCode(200)
                 .body(
                         "active.ref.name", equalTo(CHERRY_NAME),
-                        "active.ref.color", not(equalTo(CHANGED_COLOR)),
                         "active.ref.color", equalTo(CHERRY_COLOR)
                 );
     }
@@ -169,7 +169,9 @@ public class FruitResourceTest {
                 .statusCode(200)
                 .body(
                         "edited.ref.name", equalTo(CHERRY_NAME),
-                        "edited.ref.color", equalTo(CHANGED_COLOR)
+                        "edited.ref.color", equalTo(CHANGED_COLOR),
+                        "edited.ref.values[0].name", equalTo(CHANGED_COLOR)
+
                 );
     }
 
@@ -185,7 +187,9 @@ public class FruitResourceTest {
                 .statusCode(201)
                 .body(
                         "name", equalTo(CHERRY_NAME),
-                        "color", equalTo(CHANGED_COLOR)
+                        "color", equalTo(CHANGED_COLOR),
+                        "values[0].name", equalTo(CHANGED_COLOR)
+
                 );
     }
 
@@ -245,7 +249,7 @@ public class FruitResourceTest {
     @Test
     @Order(13)
     public void testDeleteSingleFruit() {
-
+/*
         //Delete the Cherry:
         given()
                 .when().delete("/fruits/" + CHERRY_UUID)
@@ -263,6 +267,8 @@ public class FruitResourceTest {
                         not(containsString("Cherry")),
                         containsString("Apple"),
                         containsString("Banana"));
+
+ */
     }
 
 

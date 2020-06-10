@@ -19,7 +19,7 @@ import javax.persistence.ManyToOne;
 import java.util.UUID;
 
 @Entity
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Audited
 @Data
 @RequiredArgsConstructor
@@ -44,7 +44,7 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
-    Fruit fruit;
+    Fruit fruits;
 
     @Override
     public void generateId() {
@@ -58,5 +58,13 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
         nutritionValue.name = this.name;
         nutritionValue.value = this.value;
         return nutritionValue;
+    }
+
+    public Fruit getFruits() {
+        return fruits;
+    }
+
+    public void setFruits(Fruit fruits) {
+        this.fruits = fruits;
     }
 }
