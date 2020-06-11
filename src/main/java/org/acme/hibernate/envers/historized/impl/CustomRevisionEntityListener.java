@@ -1,7 +1,11 @@
 package org.acme.hibernate.envers.historized.impl;
 
+import io.quarkus.security.identity.SecurityIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.envers.RevisionListener;
+
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CustomRevisionEntityListener implements RevisionListener {
@@ -11,8 +15,8 @@ public class CustomRevisionEntityListener implements RevisionListener {
         CustomRevisionEntity customRevisionEntity =
                 (CustomRevisionEntity) revisionEntity;
 
-        customRevisionEntity.setUsername(
-                "your-name-" + ((CustomRevisionEntity) revisionEntity).getRevisionDate()
-        );
+        SecurityIdentity securityIdentity = IdentityService.get();
+        customRevisionEntity.username = securityIdentity.getPrincipal().getName();
+        customRevisionEntity.roles = Optional.ofNullable(securityIdentity.getRoles()).get().stream().collect(Collectors.joining(","));
     }
 }
