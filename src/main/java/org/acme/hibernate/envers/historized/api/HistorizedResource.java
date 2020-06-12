@@ -47,15 +47,15 @@ public class HistorizedResource<T extends Historizable<I>, I> {
 
     @GET
     @Path("{id}/revisions")
-    public HistoryList<T> getRevisions(@PathParam("id") I id) {
+    public HistoryList<T, I> getRevisions(@PathParam("id") I id) {
         return repository.getList(id);
     }
 
     @GET
     @Path("{id}")
-    public Historized<T> getSingle(@PathParam("id") I id) {
+    public Historized<T, I> getSingle(@PathParam("id") I id) {
 
-        Optional<Historized<T>> optional = repository.getSingle(id);
+        Optional<Historized<T, I>> optional = repository.getSingle(id);
         return optional.orElseThrow(()
                 -> new WebApplicationException("could not find object to given id: " + id, Response.Status.NOT_FOUND));
     }

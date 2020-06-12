@@ -19,10 +19,10 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @NoArgsConstructor
 @AllArgsConstructor
-public class Historized<T> {
+public class Historized<T extends Historizable<I>, I> {
     @NonNull
-    History<T> active;
-    History<T> edited;
-    HistoryList<T> timeline;
+    History<T, I> active;
+    History<T, I> edited;
+    HistoryList<T, I> timeline;
     final LocalDateTime fetchDate = LocalDateTime.now();
 }

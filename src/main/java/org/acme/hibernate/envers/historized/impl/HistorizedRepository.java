@@ -53,16 +53,16 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         }
     }
 
-    public HistoryList<T> getList(@PathParam("id") I id) {
+    public HistoryList<T, I> getList(@PathParam("id") I id) {
         List<Number> revisions = reader.getRevisions(this.clz, id);
-        List<History<T>> collect = revisions.stream().map(
-                rev -> new History<T>(
+        List<History<T, I>> collect = revisions.stream().map(
+                rev -> new History<T, I>(
                         reader.find((Class<T>) this.clz, (Object) id, rev),
                         rev,
                         reader.findRevision(CustomRevisionEntity.class, rev)
                 )
         ).collect(Collectors.toList());
-        return new HistoryList<T>(collect);
+        return new HistoryList<T, I>(collect);
     }
 
     /**
@@ -74,20 +74,20 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      * @return - Optional with Historized wrapper containing the entity to the given id.
      * - Optional with value null if the id is not present.
      */
-    public Optional<Historized<T>> getSingle(I id) {
+    public Optional<Historized<T, I>> getSingle(I id) {
 
         // CustomRevisionEntity of the current version always know if there is an edited version
-        Optional<History<T>> optionalHistory = loadCurrent(id);
+        Optional<History<T, I>> optionalHistory = loadCurrent(id);
 
         return optionalHistory.map(hy ->
                 // we have a revision available, lets produce a Historized summary
-                new Historized<T>(
+                new Historized<T, I>(
                         getActive(hy),
                         getEdited(hy), null
                 ));
     }
 
-    private History<T> getActive(History<T> hy) {
+    private History<T, I> getActive(History<T, I> hy) {
         // only if there has been no active revision yet assigned will we not produce any active history
         if (hy.ref.isActiveRevision()) {
             return hy;
@@ -96,7 +96,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         }
     }
 
-    private History<T> getEdited(History<T> hy) {
+    private History<T, I> getEdited(History<T, I> hy) {
         if (null != hy && null != hy.ref && null != hy.ref.getEditedRevision()) {
             return loadRevision(hy.ref.getId(), hy.ref.getEditedRevision()).orElse(null);
         } else {
@@ -110,7 +110,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      * @param id
      * @return
      */
-    private Optional<History<T>> loadCurrent(I id) {
+    private Optional<History<T, I>> loadCurrent(I id) {
         // as soon as you use a projection the result will be the revision number
         // we wont do a projection in order to get also the deleted entries
         AuditQuery auditQuery = reader.createQuery()
@@ -130,7 +130,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      * @param id
      * @return
      */
-    private Optional<History<T>> loadRevision(I id, Number revision) {
+    private Optional<History<T, I>> loadRevision(I id, Number revision) {
         AuditQuery auditQuery = reader.createQuery()
                 .forRevisionsOfEntity(this.clz, false, true)
                 .add(AuditEntity.revisionNumber().eq(revision))
@@ -141,7 +141,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
 
     }
 
-    private Optional<History<T>> readQuery(I id, AuditQuery auditQuery) {
+    private Optional<History<T, I>> readQuery(I id, AuditQuery auditQuery) {
 
         Object[] result = null;
         try {
@@ -165,7 +165,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                     final T t = (T) rs[0];
                     final CustomRevisionEntity c = (CustomRevisionEntity) rs[1];
                     final RevisionType rt = (RevisionType) rs[2];
-                    return new History<T>(t, c.getId(), c);
+                    return new History<T, I>(t, c.getId(), c);
                 });
     }
 
@@ -181,7 +181,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         final I id = t.getId();
         assert id != null;
         // read the current entity as being that one which any jpa query will also fetch
-        Optional<History<T>> optionalHistory = loadCurrent(id);
+        Optional<History<T, I>> optionalHistory = loadCurrent(id);
         T current = null;
         if (!t.isActiveRevision()) {
             // is there an active version (that then needs to be put back into first position after merge)?
@@ -199,7 +199,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     private void pushActiveToTop(I id, T current) {
-        Optional<History<T>> newCurrent = loadCurrent(id);
+        Optional<History<T, I>> newCurrent = loadCurrent(id);
 
         current.setEditedRevision((Integer) newCurrent.get().getRevision());
         entityManager.merge(current);
