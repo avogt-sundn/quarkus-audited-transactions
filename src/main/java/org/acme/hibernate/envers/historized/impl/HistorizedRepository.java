@@ -98,11 +98,14 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     private History<T, I> getEdited(History<T, I> hy) {
-        if (null != hy && null != hy.ref && null != hy.ref.getEditedRevision()) {
-            return loadRevision(hy.ref.getId(), hy.ref.getEditedRevision()).orElse(null);
-        } else {
-            return null;
+        if (null != hy && null != hy.ref) {
+            if (null != hy.ref.getEditedRevision()) {
+                return loadRevision(hy.ref.getId(), hy.ref.getEditedRevision()).orElse(null);
+            } else if (!hy.ref.isActiveRevision()) {
+                return hy;
+            }
         }
+        return null;
     }
 
     /**

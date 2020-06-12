@@ -32,6 +32,7 @@ public class FruitResourceTest {
      */
     final static UUID CHERRY_UUID = UUID.randomUUID();
     final static String CHERRY_NAME = "Cherry";
+    final static String NO_COLOR = "no";
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "_changed";
     final static String CHANGED_COLOR_2ND = "_changed_2nd";
@@ -47,11 +48,11 @@ public class FruitResourceTest {
     @Test
     @Order(-1)
     public void initialDataSet() {
-        Fruit fruit = new Fruit(CHERRY_UUID, true, CHERRY_NAME, CHERRY_COLOR);
+        Fruit fruit = new Fruit(CHERRY_UUID, false, CHERRY_NAME, NO_COLOR);
         fruit.addNutritions(new NutritionValue(UUID.randomUUID(), true, NUTRI_NAME, "y"));
         createNew(fruit);
-        createNew(new Fruit(UUID.randomUUID(), true, "Apple", "green"));
-        createNew(new Fruit(UUID.randomUUID(), true, "Banana", "yellow"));
+        createNew(new Fruit(UUID.randomUUID(), false, "Apple", "green"));
+        createNew(new Fruit(UUID.randomUUID(), false, "Banana", "yellow"));
     }
 
     @Test
@@ -76,23 +77,22 @@ public class FruitResourceTest {
         Assertions.assertEquals(CHERRY_UUID.toString(), oneValidId);
     }
 
+
     @Test
     @Order(2)
-    public void getSingleFruit() {
-
+    public void getInitialSingleCherryEdited() {
         given()
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
-                .body("active.ref.name", equalTo("Cherry"),
-                        "active.revision", Matchers.greaterThanOrEqualTo(1),
-                        "active.info.id", Matchers.greaterThanOrEqualTo(1),
+                .body("edited.ref.name", equalTo("Cherry"),
+                        "active", Matchers.emptyOrNullString(),
                         "fetchDate", not(Matchers.emptyOrNullString())
                 );
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     public void getSingleNonExistentFruit() {
         given()
                 .when().get("/fruits/" + UUID.randomUUID())
@@ -109,7 +109,7 @@ public class FruitResourceTest {
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
-                .extract().jsonPath().getObject("active.ref", Fruit.class);
+                .extract().jsonPath().getObject("edited.ref", Fruit.class);
         // now Change it with a put on /fruits/{id}
         final Fruit copy = baseFruit.copy();
         copy.color = CHANGED_COLOR;
@@ -135,8 +135,9 @@ public class FruitResourceTest {
                 .then()
                 .statusCode(200)
                 .body(
-                        "active.ref.name", equalTo(CHERRY_NAME),
-                        "active.ref.color", equalTo(CHERRY_COLOR)
+                        "active", Matchers.emptyOrNullString(),
+                        "edited.ref.name", equalTo(CHERRY_NAME),
+                        "edited.ref.color", equalTo(CHANGED_COLOR)
                 );
     }
 
@@ -182,7 +183,7 @@ public class FruitResourceTest {
                 .then()
                 .statusCode(200)
                 .body(containsString(CHERRY_NAME),
-                        containsString(CHERRY_COLOR)
+                        containsString(NO_COLOR)
                 );
     }
 
