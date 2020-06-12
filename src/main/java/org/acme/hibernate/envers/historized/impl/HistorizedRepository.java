@@ -1,6 +1,7 @@
 package org.acme.hibernate.envers.historized.impl;
 
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
@@ -173,12 +174,11 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         entityManager.persist(t);
     }
 
-    public T merge(T t) {
+    public T merge(I id, T t, boolean partialUpdate) {
         // before we merge an edited revision, the current revision with the id of t is the active rev.
         // after we have merged, the current must be an active revision, either this newly created or the former.
 
         assert t != null;
-        final I id = t.getId();
         assert id != null;
         // read the current entity as being that one which any jpa query will also fetch
         Optional<History<T, I>> optionalHistory = loadCurrent(id);
@@ -188,7 +188,13 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
             current = entityManager.find(clz, id);
             entityManager.detach(current);
         }
-
+        if (partialUpdate) {
+            Integer editedRevision = optionalHistory.get().ref.getEditedRevision();
+            Optional<History<T, I>> edited = loadRevision(id, editedRevision);
+            @NonNull T mergeWith = edited.get().ref;
+            BeanMerge.merge(mergeWith, t);
+            t = mergeWith;
+        }
         T merge = createBean().commitMerge(t);
 
         if (current != null) {
@@ -205,14 +211,6 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         entityManager.merge(current);
     }
 
-    public <I> T partialUpdate(I id, T t) {
-        // FIXME: against which version do we want to merge? active or edited?
-        final T fromDatabase = entityManager.find(clz, id);
-        BeanMerge.merge(fromDatabase, t);
-        // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = entityManager.merge(fromDatabase);
-        return merged;
-    }
 
     public <I> void delete(I id) {
         entityManager.remove(entityManager.find(clz, id));

@@ -100,9 +100,10 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         if (id == null) {
             throw new WebApplicationException("I was missing on request.", Response.Status.BAD_REQUEST);
         }
+        // the id in the path param is authoritative, ignore any id in the body
         t.setId(id);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = repository.merge(t);
+        T merged = repository.merge(id, t, false);
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 
@@ -124,7 +125,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         // the id in the path param is authoritative, ignore any id in the body
         t.setId(id);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = repository.partialUpdate(id, t);
+        T merged = repository.merge(id, t, true);
         return Response.ok(merged).status(Response.Status.CREATED).build();
     }
 

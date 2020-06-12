@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 public final class BeanMerge {
 
     public static <M> void merge(M target, M source) {
+        assert null != target && null != source;
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(target.getClass());
             // Iterate over all the attributes

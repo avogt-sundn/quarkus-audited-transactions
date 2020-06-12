@@ -136,13 +136,26 @@ public class FruitResourceTest {
                 .statusCode(200)
                 .body(
                         "active.ref.name", equalTo(CHERRY_NAME),
-                        "active.ref.color", equalTo(CHERRY_COLOR),
-                        "active.ref.values[0].name", equalTo(NUTRI_NAME)
+                        "active.ref.color", equalTo(CHERRY_COLOR)
                 );
     }
 
     @Test
     @Order(6)
+    @DisplayName("active version unchanged by update")
+    public void checkActiveAfterChangeStillSameInAssociated() {
+        // do a GET to check active version values are still unchanged
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "active.ref.values[0].name", equalTo(NUTRI_NAME)
+                );
+    }
+
+    @Test
+    @Order(7)
     @DisplayName("check edited version after update")
     public void checkEditedIsThere() {
         // do a GET to check values are still as they were returned on the PUT
@@ -160,7 +173,7 @@ public class FruitResourceTest {
 
 
     @Test
-    @Order(7)
+    @Order(9)
     @DisplayName("active version fetched by queries")
     public void checkThatQueriesGetTheActiveVersion() {
         // do a GET to check active version values are still unchanged
@@ -174,11 +187,11 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(8)
+    @Order(11)
     @DisplayName("patch to new active version")
     public void newActiveCherryWithEditedColor() {
 
-        given().with().body("{\"active\":true}").contentType(ContentType.JSON)
+        given().with().body("{\"activeRevision\":true}").contentType(ContentType.JSON)
                 .when().patch("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(201)
@@ -191,7 +204,7 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(9)
+    @Order(13)
     @DisplayName("check edited version after update")
     public void checkNoEditedNow() {
         // do a GET to check values are still as they were returned on the PUT
@@ -204,7 +217,7 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(10)
+    @Order(14)
     @DisplayName("create 2nd edited version")
     public void changeCherryColor2nd() {
 
@@ -229,7 +242,7 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(16)
     @DisplayName("check edited version after update")
     public void checkNoEditedNow2nd() {
         // do a GET to check values are still as they were returned on the PUT
@@ -245,7 +258,7 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(13)
+    @Order(18)
     public void testDeleteSingleFruit() {
 /*
         //Delete the Cherry:
