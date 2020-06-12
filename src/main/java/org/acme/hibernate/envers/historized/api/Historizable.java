@@ -24,5 +24,10 @@ public interface Historizable<I> {
      */
     void generateId();
 
-    boolean isActive();
+    boolean isActiveRevision();
+
+    Integer getEditedRevision();
+
+    void setEditedRevision(Integer rev);
+
 }

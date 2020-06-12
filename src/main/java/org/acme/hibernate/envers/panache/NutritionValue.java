@@ -32,7 +32,8 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
     @NonNull
     UUID id;
     @NonNull
-    boolean active;
+    boolean activeRevision;
+    Integer editedRevision;
     @NonNull
     String name;
     @NonNull
@@ -51,10 +52,12 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
         this.id = UUID.randomUUID();
     }
 
+
     public NutritionValue copy() {
         NutritionValue nutritionValue = new NutritionValue();
         nutritionValue.id = this.id;
-        nutritionValue.active = this.active;
+        nutritionValue.activeRevision = this.activeRevision;
+        nutritionValue.editedRevision = editedRevision;
         nutritionValue.name = this.name;
         nutritionValue.value = this.value;
         return nutritionValue;

@@ -45,15 +45,18 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      * if active is false, this entity is an edited version.
      */
     @NonNull
-    boolean active;
+    boolean activeRevision;
+    Integer editedRevision;
+
     @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "fruits")
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
-//    @javax.validation.constraints.NotNull
+    @javax.validation.constraints.NotNull
     @NonNull
     String name;
     @NonNull
+    @javax.validation.constraints.NotNull
     String color;
 
     Fruit copy() {

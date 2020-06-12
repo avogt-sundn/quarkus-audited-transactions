@@ -83,6 +83,8 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     /**
      * PUT /T/{id} - receives a T as an overwriting update to an already stored T.
      * null values in the received T will overwrite any value present in the persistence.
+     * If there exists no T to the id presented in the @PathParam, a new will be created just as with POST.
+     * <p>
      * If you want to merge only selected values, use PATCH instead.
      * - I is expected on the url path
      * - body is expected to be valid T json
@@ -94,7 +96,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @PUT
     @Path("{id}")
     @Transactional
-    public Response addOrUpdate(@PathParam("id") I id, @Valid T t) {
+    public Response addOrOverwrite(@PathParam("id") I id, @Valid T t) {
         if (id == null) {
             throw new WebApplicationException("I was missing on request.", Response.Status.BAD_REQUEST);
         }

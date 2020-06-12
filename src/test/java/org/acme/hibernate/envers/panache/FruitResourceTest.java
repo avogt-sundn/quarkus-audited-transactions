@@ -79,25 +79,7 @@ public class FruitResourceTest {
     @Test
     @Order(2)
     public void getSingleFruit() {
-        final String fullResponseBody =
-                "{\n" +
-                        "    \"active\": {\n" +
-                        "        \"info\": {\n" +
-                        "            \"id\": 1,\n" +
-                        "            \"revisionDate\": \"2020-06-06T19:39:56\",\n" +
-                        "            \"timestamp\": 1591472396218,\n" +
-                        "            \"username\": \"your-name-Sat Jun 06 21:39:56 CEST 2020\"\n" +
-                        "        },\n" +
-                        "        \"ref\": {\n" +
-                        "            \"active\": true,\n" +
-                        "            \"color\": \"red\",\n" +
-                        "            \"id\": \"a309e0bd-5181-4521-9e3c-e57b4eafe404\",\n" +
-                        "            \"name\": \"Cherry\"\n" +
-                        "        },\n" +
-                        "        \"revision\": 1\n" +
-                        "    },\n" +
-                        "    \"fetchDate\": \"2020-06-06T21:39:57\"\n" +
-                        "}";
+
         given()
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
@@ -154,7 +136,8 @@ public class FruitResourceTest {
                 .statusCode(200)
                 .body(
                         "active.ref.name", equalTo(CHERRY_NAME),
-                        "active.ref.color", equalTo(CHERRY_COLOR)
+                        "active.ref.color", equalTo(CHERRY_COLOR),
+                        "active.ref.values[0].name", equalTo(NUTRI_NAME)
                 );
     }
 
@@ -177,8 +160,22 @@ public class FruitResourceTest {
 
 
     @Test
+    @Order(7)
+    @DisplayName("active version fetched by queries")
+    public void checkThatQueriesGetTheActiveVersion() {
+        // do a GET to check active version values are still unchanged
+        given()
+                .when().get("/fruits/")
+                .then()
+                .statusCode(200)
+                .body(containsString(CHERRY_NAME),
+                        containsString(CHERRY_COLOR)
+                );
+    }
+
+    @Test
     @Order(8)
-    @DisplayName("new active version")
+    @DisplayName("patch to new active version")
     public void newActiveCherryWithEditedColor() {
 
         given().with().body("{\"active\":true}").contentType(ContentType.JSON)
@@ -220,7 +217,8 @@ public class FruitResourceTest {
         final Fruit copy = baseFruit.copy();
         copy.color = CHANGED_COLOR_2ND;
         // now also set as active version and use PUT
-        copy.active = true;
+        copy.activeRevision = true;
+        copy.editedRevision = null;
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
                 .then()
