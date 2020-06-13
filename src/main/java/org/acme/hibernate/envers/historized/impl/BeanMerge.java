@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public final class BeanMerge {
 
-    public static <M> void merge(M target, M source) {
+    public static <M> M merge2On1(M target, M source) {
         assert null != target && null != source;
         try {
             BeanInfo beanInfo = Introspector.getBeanInfo(target.getClass());
@@ -32,5 +32,6 @@ public final class BeanMerge {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+        return target;
     }
 }

@@ -1,7 +1,6 @@
 package org.acme.hibernate.envers.historized.impl;
 
 
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
@@ -18,7 +17,6 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.CDI;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -78,7 +76,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     public Optional<Historized<T, I>> getSingle(I id) {
 
         // CustomRevisionEntity of the current version always know if there is an edited version
-        Optional<History<T, I>> optionalHistory = loadCurrent(id);
+        Optional<History<T, I>> optionalHistory = loadLatestRevision(id);
 
         return optionalHistory.map(hy ->
                 // we have a revision available, lets produce a Historized summary
@@ -109,12 +107,16 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     /**
-     * fetch newest/latest revision to the id
+     * fetch newest/latest revision to the id.
+     * entity is detached since you will never want to change on the revisioned entity.
+     * <p>
+     * It is possible that there is no revision but a valid entity to the given id:
+     * the entity might have been created without hibernate
      *
      * @param id
-     * @return
+     * @return the History containing the entity T in a detached state
      */
-    private Optional<History<T, I>> loadCurrent(I id) {
+    private Optional<History<T, I>> loadLatestRevision(I id) {
         // as soon as you use a projection the result will be the revision number
         // we wont do a projection in order to get also the deleted entries
         AuditQuery auditQuery = reader.createQuery()
@@ -124,7 +126,9 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                 .addOrder(AuditEntity.revisionNumber().desc())
                 .setMaxResults(1);
 
-        return readQuery(id, auditQuery);
+        Optional<History<T, I>> history = readQuery(id, auditQuery);
+        history.ifPresent(hy -> entityManager.detach(hy.ref));
+        return history;
 
     }
 
@@ -177,41 +181,58 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         entityManager.persist(t);
     }
 
-    public T merge(I id, T t, boolean partialUpdate) {
-        // before we merge an edited revision, the current revision with the id of t is the active rev.
-        // after we have merged, the current must be an active revision, either this newly created or the former.
+    /**
+     * Before we merge an edited revision, the current revision with the id of t is the active rev.
+     * After we have merged, the current must be an active revision, either this newly created or the former.
+     *
+     * @param id
+     * @param t
+     * @param partialUpdate
+     * @return
+     */
+    public T merge(final I id, final T t, boolean partialUpdate) {
 
         assert t != null;
         assert id != null;
-        // read the current entity as being that one which any jpa query will also fetch
-        Optional<History<T, I>> optionalHistory = loadCurrent(id);
-        T current = null;
-        if (!t.isActiveRevision()) {
-            // is there an active version (that then needs to be put back into first position after merge)?
-            current = entityManager.find(clz, id);
-            entityManager.detach(current);
-        }
-        if (partialUpdate) {
-            Integer editedRevision = optionalHistory.get().ref.getEditedRevision();
-            Optional<History<T, I>> edited = loadRevision(id, editedRevision);
-            @NonNull T mergeWith = edited.get().ref;
-            BeanMerge.merge(mergeWith, t);
-            t = mergeWith;
-        }
-        T merge = createBean().commitMerge(t);
+        // the latest revision envers has created (there may be none!)
+        Optional<History<T, I>> latest = loadLatestRevision(id);
 
-        if (current != null) {
-            pushActiveToTop(id, current);
-        }
+        // merge against latest edited revision.
+        // if there is no such, merge against the latest active revision.
+        // if there is no such either, merge against the entity found with a fetch.
+        // if there is none of any, just store it man!
+        T mergeOn = null;
+        Optional<T> mergeAgainst = latest.map(hy -> {
+            // read the latest editedRevision from the latest
+            Integer editedRevision = latest.get().ref.getEditedRevision();
+            if (null != editedRevision) {
+                Optional<History<T, I>> latestEdited = loadRevision(id, editedRevision);
+                return Optional.of(latestEdited.get().ref);
+            } else {
+                return Optional.of(latest.get().ref);
+            }
+        }).orElseGet(() -> {
+                    return Optional.<T>ofNullable(entityManager.find(clz, id));
+                }
+        );
+        T merge = mergeAgainst.map(ma -> BeanMerge.merge2On1(ma, t)).orElse(t);
+
+        // commit will save the t and also create a new revision when the tx closes
+        merge = createBean().commitMerge(merge);
+
+        if (!t.isActiveRevision())
+            // make former latest revision again the latest, pushing the edited revision one behind
+            // this way edited revision will never be fetched by any queries.
+            latest.ifPresent(
+                    hy ->
+
+                    {
+                        // get the new edited revision and store it in the new active revision:
+                        Optional<History<T, I>> newCurrent = loadLatestRevision(id);
+                        hy.ref.setEditedRevision((Integer) newCurrent.get().getRevision());
+                        entityManager.merge(hy.ref);
+                    });
         return merge;
-    }
-
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
-    private void pushActiveToTop(I id, T current) {
-        Optional<History<T, I>> newCurrent = loadCurrent(id);
-
-        current.setEditedRevision((Integer) newCurrent.get().getRevision());
-        entityManager.merge(current);
     }
 
 

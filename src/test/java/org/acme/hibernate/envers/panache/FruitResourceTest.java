@@ -127,7 +127,7 @@ public class FruitResourceTest {
 
     @Test
     @Order(5)
-    @DisplayName("active version unchanged by update")
+    @DisplayName("edited version changed by update")
     public void checkActiveAfterChangeStillSame() {
         // do a GET to check active version values are still unchanged
         given()
@@ -143,21 +143,7 @@ public class FruitResourceTest {
 
     @Test
     @Order(6)
-    @DisplayName("active version unchanged by update")
-    public void checkActiveAfterChangeStillSameInAssociated() {
-        // do a GET to check active version values are still unchanged
-        given()
-                .when().get("/fruits/" + CHERRY_UUID)
-                .then()
-                .statusCode(200)
-                .body(
-                        "active.ref.values[0].name", equalTo(NUTRI_NAME)
-                );
-    }
-
-    @Test
-    @Order(7)
-    @DisplayName("check edited version after update")
+    @DisplayName("edited version associate changed by update")
     public void checkEditedIsThere() {
         // do a GET to check values are still as they were returned on the PUT
         given()
@@ -172,20 +158,6 @@ public class FruitResourceTest {
                 );
     }
 
-
-    @Test
-    @Order(9)
-    @DisplayName("active version fetched by queries")
-    public void checkThatQueriesGetTheActiveVersion() {
-        // do a GET to check active version values are still unchanged
-        given()
-                .when().get("/fruits/")
-                .then()
-                .statusCode(200)
-                .body(containsString(CHERRY_NAME),
-                        containsString(NO_COLOR)
-                );
-    }
 
     @Test
     @Order(11)
