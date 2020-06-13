@@ -190,7 +190,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      * @param partialUpdate
      * @return
      */
-    public T merge(final I id, final T t, boolean partialUpdate) {
+    public T merge(final I id, final T t) {
 
         assert t != null;
         assert id != null;

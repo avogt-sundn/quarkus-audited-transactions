@@ -118,7 +118,7 @@ public class FruitResourceTest {
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
                 .then()
-                .statusCode(201)
+                .statusCode(200)
                 .body(
                         "name", equalTo(CHERRY_NAME),
                         "color", equalTo(CHANGED_COLOR),
@@ -167,7 +167,7 @@ public class FruitResourceTest {
         given().with().body("{\"activeRevision\":true}").contentType(ContentType.JSON)
                 .when().patch("/fruits/" + CHERRY_UUID)
                 .then()
-                .statusCode(201)
+                .statusCode(200)
                 .body(
                         "name", equalTo(CHERRY_NAME),
                         "color", equalTo(CHANGED_COLOR),
@@ -208,7 +208,7 @@ public class FruitResourceTest {
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
                 .then()
-                .statusCode(201)
+                .statusCode(200)
                 .body(
                         "name", equalTo(CHERRY_NAME),
                         "color", equalTo(CHANGED_COLOR_2ND));

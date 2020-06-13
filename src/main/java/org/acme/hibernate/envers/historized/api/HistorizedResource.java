@@ -81,8 +81,9 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     }
 
     /**
-     * PUT /T/{id} - receives a T as an overwriting update to an already stored T.
-     * null values in the received T will overwrite any value present in the persistence.
+     * PUT /T/{id} - receives a T as an optionally partial and always overwriting update to an already stored T.
+     * null values in the received T will be ignored.
+     * <p>
      * If there exists no T to the id presented in the @PathParam, a new will be created just as with POST.
      * <p>
      * If you want to merge only selected values, use PATCH instead.
@@ -97,18 +98,24 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @Path("{id}")
     @Transactional
     public Response addOrOverwrite(@PathParam("id") I id, @Valid T t) {
+        return partialUpdateOrCreate(id, t);
+    }
+
+    private Response partialUpdateOrCreate(@PathParam("id") I id, @Valid T t) {
         if (id == null) {
-            throw new WebApplicationException("I was missing on request.", Response.Status.BAD_REQUEST);
+            throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
         // the id in the path param is authoritative, ignore any id in the body
         t.setId(id);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = repository.merge(id, t, false);
-        return Response.ok(merged).status(Response.Status.CREATED).build();
+        T merged = repository.merge(id, t);
+        return Response.ok(merged).status(Response.Status.OK).build();
     }
 
     /**
-     * PATCH is like PUT, but allows for partially filled T.
+     * PATCH is like PUT, the idea is for partial updating prefer PATCH.
+     * Nevertheless PUT can do the same partial merge.
+     * <p>
      * The filled values are then merged into the already existent T entity.
      *
      * @param id
@@ -119,14 +126,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @Path("{id}")
     @Transactional
     public Response partialUpdate(@PathParam("id") I id, T t) {
-        if (id == null) {
-            throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
-        }
-        // the id in the path param is authoritative, ignore any id in the body
-        t.setId(id);
-        // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = repository.merge(id, t, true);
-        return Response.ok(merged).status(Response.Status.CREATED).build();
+        return partialUpdateOrCreate(id, t);
     }
 
     @DELETE
