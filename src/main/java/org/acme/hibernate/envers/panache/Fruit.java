@@ -44,7 +44,6 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      * only active entities are fetched by queries, representing a current state at one point in time.
      * if active is false, this entity is an edited version.
      */
-    @NonNull
     boolean activeRevision;
     Integer editedRevision;
 
@@ -53,11 +52,16 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     @Column(length = 40, unique = true)
     @javax.validation.constraints.NotNull
-    @NonNull
     String name;
-    @NonNull
     @javax.validation.constraints.NotNull
     String color;
+
+    public Fruit(UUID uuid, boolean b, String name, String color) {
+        this.id = uuid;
+        this.activeRevision = b;
+        this.name = name;
+        this.color = color;
+    }
 
     Fruit copy() {
         Fruit fruit = new Fruit();

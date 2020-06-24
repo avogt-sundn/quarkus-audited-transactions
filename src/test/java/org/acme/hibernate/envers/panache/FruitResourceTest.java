@@ -177,9 +177,9 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(13)
-    @DisplayName("check edited version after update")
-    public void checkNoEditedNow() {
+    @Order(11)
+    @DisplayName("check edited version after patch")
+    public void afterPatchEdited() {
         // do a GET to check values are still as they were returned on the PUT
         given()
                 .when().get("/fruits/" + CHERRY_UUID)
@@ -187,6 +187,23 @@ public class FruitResourceTest {
                 .statusCode(200)
                 .body(
                         "edited", Matchers.emptyOrNullString());
+    }
+
+
+    @Test
+    @Order(13)
+    @DisplayName("check active version after patch")
+    public void afterPatchActive() {
+        // do a GET to check values are still as they were returned on the PUT
+        given()
+                .when().get("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
+                .body(
+                        "active.ref.name", equalTo(CHERRY_NAME),
+                        "active.ref.color", equalTo(CHANGED_COLOR),
+                        "active.ref.values[0].name", equalTo(CHANGED_COLOR)
+                );
     }
 
     @Test
@@ -202,8 +219,8 @@ public class FruitResourceTest {
         // now Change it with a put on /fruits/{id}
         final Fruit copy = baseFruit.copy();
         copy.color = CHANGED_COLOR_2ND;
-        // now also set as active version and use PUT
-        copy.activeRevision = true;
+        // now also set as edited version and use PUT
+        copy.activeRevision = false;
         copy.editedRevision = null;
         given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + CHERRY_UUID)
@@ -215,19 +232,26 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(16)
-    @DisplayName("check edited version after update")
-    public void checkNoEditedNow2nd() {
-        // do a GET to check values are still as they were returned on the PUT
-        given()
+    @Order(14)
+    @DisplayName("activate")
+    public void changeActiveCherryColor2nd() {
+
+        final Fruit baseFruit = given()
                 .when().get("/fruits/" + CHERRY_UUID)
                 .then()
                 .statusCode(200)
+                .extract().jsonPath().getObject("edited.ref", Fruit.class);
+        // now Change it with a put on /fruits/{id}
+        baseFruit.color = CHANGED_COLOR_2ND;
+        // now also set as edited version and use PUT
+        baseFruit.activeRevision = true;
+        given().with().body(baseFruit).contentType(ContentType.JSON)
+                .when().put("/fruits/" + CHERRY_UUID)
+                .then()
+                .statusCode(200)
                 .body(
-                        "edited", Matchers.emptyOrNullString(),
-                        "active.ref.name", equalTo(CHERRY_NAME),
-                        "active.ref.color", equalTo(CHANGED_COLOR_2ND)
-                );
+                        "name", equalTo(CHERRY_NAME),
+                        "color", equalTo(CHANGED_COLOR_2ND));
     }
 
     @Test

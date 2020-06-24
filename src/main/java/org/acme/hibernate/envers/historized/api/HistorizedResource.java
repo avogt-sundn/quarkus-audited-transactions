@@ -48,14 +48,14 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @GET
     @Path("{id}/revisions")
     public HistoryList<T, I> getRevisions(@PathParam("id") I id) {
-        return repository.getList(id);
+        return this.repository.getList(id);
     }
 
     @GET
     @Path("{id}")
     public Historized<T, I> getSingle(@PathParam("id") I id) {
 
-        Optional<Historized<T, I>> optional = repository.getSingle(id);
+        Optional<Historized<T, I>> optional = this.repository.getSingle(id);
         return optional.orElseThrow(()
                 -> new WebApplicationException("could not find object to given id: " + id, Response.Status.NOT_FOUND));
     }
@@ -76,7 +76,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         if (t.getId() == null) {
             t.generateId();
         }
-        repository.persist(t);
+        this.repository.persist(t);
         return Response.ok(t).status(Response.Status.CREATED).build();
     }
 
@@ -97,18 +97,18 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @PUT
     @Path("{id}")
     @Transactional
-    public Response addOrOverwrite(@PathParam("id") I id, @Valid T t) {
+    public Response addOrOverwrite(@PathParam("id") I id, T t) {
         return partialUpdateOrCreate(id, t);
     }
 
-    private Response partialUpdateOrCreate(@PathParam("id") I id, @Valid T t) {
+    protected Response partialUpdateOrCreate(I id, T t) {
         if (id == null) {
             throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
         // the id in the path param is authoritative, ignore any id in the body
         t.setId(id);
         // merge will replace all stored values with the ones received - null will overwrite!
-        T merged = repository.merge(id, t);
+        T merged = this.repository.merge(id, t);
         return Response.ok(merged).status(Response.Status.OK).build();
     }
 
@@ -136,7 +136,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
         if (I == null) {
             throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
-        repository.delete(I);
+        this.repository.delete(I);
         return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 

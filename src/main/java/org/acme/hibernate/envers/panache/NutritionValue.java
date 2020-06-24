@@ -63,11 +63,4 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
         return nutritionValue;
     }
 
-    public Fruit getFruits() {
-        return fruits;
-    }
-
-    public void setFruits(Fruit fruits) {
-        this.fruits = fruits;
-    }
 }

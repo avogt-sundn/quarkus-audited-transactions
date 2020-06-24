@@ -1,6 +1,5 @@
 package org.acme.hibernate.envers.historized.impl;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
@@ -53,12 +52,12 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     public HistoryList<T, I> getList(@PathParam("id") I id) {
-        List<Number> revisions = reader.getRevisions(this.clz, id);
+        List<Number> revisions = this.reader.getRevisions(this.clz, id);
         List<History<T, I>> collect = revisions.stream().map(
                 rev -> new History<T, I>(
-                        reader.find((Class<T>) this.clz, (Object) id, rev),
+                        this.reader.find((Class<T>) this.clz, (Object) id, rev),
                         rev,
-                        reader.findRevision(CustomRevisionEntity.class, rev)
+                        this.reader.findRevision(CustomRevisionEntity.class, rev)
                 )
         ).collect(Collectors.toList());
         return new HistoryList<T, I>(collect);
@@ -78,6 +77,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         // CustomRevisionEntity of the current version always know if there is an edited version
         Optional<History<T, I>> optionalHistory = loadLatestRevision(id);
 
+        log.info("loaded latest revision: {}", optionalHistory);
         return optionalHistory.map(hy ->
                 // we have a revision available, lets produce a Historized summary
                 new Historized<T, I>(
@@ -119,7 +119,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     private Optional<History<T, I>> loadLatestRevision(I id) {
         // as soon as you use a projection the result will be the revision number
         // we wont do a projection in order to get also the deleted entries
-        AuditQuery auditQuery = reader.createQuery()
+        AuditQuery auditQuery = this.reader.createQuery()
                 .forRevisionsOfEntity(this.clz, false, true)
                 .add(AuditEntity.id().eq(id))
                 // get the highest revision number available by sorting descending plus limiting to 1 entity result
@@ -127,7 +127,13 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                 .setMaxResults(1);
 
         Optional<History<T, I>> history = readQuery(id, auditQuery);
-        history.ifPresent(hy -> entityManager.detach(hy.ref));
+        if (history.isEmpty()) {
+            T find = findAndDetach(id);
+            if (null != find) {
+                history = Optional.of(new History<>(find, 0));
+            }
+        }
+        history.ifPresent(hy -> this.entityManager.detach(hy.ref));
         return history;
 
     }
@@ -139,7 +145,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      * @return
      */
     private Optional<History<T, I>> loadRevision(I id, Number revision) {
-        AuditQuery auditQuery = reader.createQuery()
+        AuditQuery auditQuery = this.reader.createQuery()
                 .forRevisionsOfEntity(this.clz, false, true)
                 .add(AuditEntity.revisionNumber().eq(revision))
                 .add(AuditEntity.id().eq(id))
@@ -178,7 +184,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
     }
 
     public void persist(T t) {
-        entityManager.persist(t);
+        this.entityManager.persist(t);
     }
 
     /**
@@ -187,7 +193,6 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
      *
      * @param id
      * @param t
-     * @param partialUpdate
      * @return
      */
     public T merge(final I id, final T t) {
@@ -201,7 +206,6 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         // if there is no such, merge against the latest active revision.
         // if there is no such either, merge against the entity found with a fetch.
         // if there is none of any, just store it man!
-        T mergeOn = null;
         Optional<T> mergeAgainst = latest.map(hy -> {
             // read the latest editedRevision from the latest
             Integer editedRevision = latest.get().ref.getEditedRevision();
@@ -212,31 +216,39 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                 return Optional.of(latest.get().ref);
             }
         }).orElseGet(() -> {
-                    return Optional.<T>ofNullable(entityManager.find(clz, id));
+                    return Optional.<T>ofNullable(findAndDetach(id));
                 }
         );
         T merge = mergeAgainst.map(ma -> BeanMerge.merge2On1(ma, t)).orElse(t);
-
+        log.info("em.merge with: {}", merge);
         // commit will save the t and also create a new revision when the tx closes
         merge = createBean().commitMerge(merge);
 
         if (!t.isActiveRevision())
-            // make former latest revision again the latest, pushing the edited revision one behind
-            // this way edited revision will never be fetched by any queries.
+        // make former latest revision again the latest, pushing the edited revision one behind
+        // this way edited revision will never be fetched by any queries.
+        {
             latest.ifPresent(
-                    hy ->
-
-                    {
+                    hy -> {
                         // get the new edited revision and store it in the new active revision:
                         Optional<History<T, I>> newCurrent = loadLatestRevision(id);
                         hy.ref.setEditedRevision((Integer) newCurrent.get().getRevision());
-                        entityManager.merge(hy.ref);
+                        this.entityManager.merge(hy.ref);
                     });
+        }
         return merge;
+    }
+
+    private T findAndDetach(I id) {
+        T t1 = this.entityManager.find(this.clz, id);
+        if (null != t1) {
+            this.entityManager.detach(t1);
+        }
+        return t1;
     }
 
 
     public <I> void delete(I id) {
-        entityManager.remove(entityManager.find(clz, id));
+        this.entityManager.remove(this.entityManager.find(this.clz, id));
     }
 }
