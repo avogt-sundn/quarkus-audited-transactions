@@ -16,7 +16,9 @@ public class Transactor<T> {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     protected T commitMerge(T t) {
+        entityManager.clear();
         T merge = entityManager.merge(t);
+        entityManager.flush();
         return merge;
     }
 
