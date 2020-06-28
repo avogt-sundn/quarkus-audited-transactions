@@ -125,7 +125,7 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @PATCH
     @Path("{id}")
     @Transactional
-    public Response partialUpdate(@PathParam("id") I id, T t) {
+    public Response patch(@PathParam("id") I id, T t) {
         return partialUpdateOrCreate(id, t);
     }
 
