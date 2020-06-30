@@ -54,6 +54,8 @@ deploy:jdk8:
   script:
     - if [ -f .mvn/settings.xml ];
         'mvn $MAVEN_CLI_OPTS deploy -s .mvn/settings.xml'
+      else
+        'mvn $MAVEN_CLI_OPTS deploy'
       fi
   only:
     - master
