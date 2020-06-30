@@ -52,10 +52,6 @@ verify:jdk8:
 deploy:jdk8:
   stage: deploy
   script:
-    - if [ -f .mvn/settings.xml ];
-        'mvn $MAVEN_CLI_OPTS deploy -s .mvn/settings.xml'
-      else
-        'mvn $MAVEN_CLI_OPTS deploy'
-      fi
+    - 'mvn $MAVEN_CLI_OPTS deploy'
   only:
     - master
