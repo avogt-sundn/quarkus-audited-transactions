@@ -47,7 +47,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     boolean activeRevision;
     Integer editedRevision;
 
-    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER, mappedBy = "fruits")
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
@@ -70,7 +70,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         fruit.color = color;
         // if there is a set, copy values into a new set and set reference to the new fruit
         fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
-                .map(n -> n.copy()).peek(n -> n.fruits = fruit).collect(Collectors.toSet());
+                .map(n -> n.copy()).collect(Collectors.toSet());
         return fruit;
     }
 
@@ -85,6 +85,6 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         }
         List<NutritionValue> nutritionValues = Arrays.asList(val);
         this.values.addAll(nutritionValues);
-        nutritionValues.stream().forEach(v -> v.setFruits(this));
+
     }
 }

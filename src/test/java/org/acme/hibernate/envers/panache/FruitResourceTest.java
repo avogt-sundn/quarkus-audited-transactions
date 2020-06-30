@@ -177,7 +177,7 @@ public class FruitResourceTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @DisplayName("check edited version after patch")
     public void afterPatchEdited() {
         // do a GET to check values are still as they were returned on the PUT

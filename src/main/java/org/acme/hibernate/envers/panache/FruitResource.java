@@ -8,15 +8,12 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 ;
@@ -40,19 +37,4 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
         return Fruit.findAll().list();
     }
 
-    @Override
-    public Response add(@Valid final Fruit fruit) {
-        Optional.ofNullable(fruit.values).ifPresent(se -> se.forEach(nu -> {
-            nu.fruits = fruit;
-        }));
-        return super.add(fruit);
-    }
-
-    @Override
-    protected Response partialUpdateOrCreate(UUID id, Fruit fruit) {
-        Optional.ofNullable(fruit.values).stream().forEach(set -> set.stream().forEach(nu -> {
-            nu.fruits = fruit;
-        }));
-        return super.partialUpdateOrCreate(id, fruit);
-    }
 }

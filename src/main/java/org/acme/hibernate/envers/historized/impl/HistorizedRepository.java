@@ -219,7 +219,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                     return Optional.<T>ofNullable(findAndDetach(id));
                 }
         );
-        T merge = mergeAgainst.map(ma -> BeanMerge.merge2On1(ma, t)).orElse(t);
+        T merge = mergeAgainst.map(ma -> mergeBeans(t, ma)).orElse(t);
         log.info("em.merge with: {}", merge);
         // commit will save the t and also create a new revision when the tx closes
         merge = createBean().commitMerge(merge);
@@ -237,6 +237,10 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                     });
         }
         return merge;
+    }
+
+    protected T mergeBeans(T t, T ma) {
+        return BeanMerge.merge2On1(ma, t);
     }
 
     private T findAndDetach(I id) {
