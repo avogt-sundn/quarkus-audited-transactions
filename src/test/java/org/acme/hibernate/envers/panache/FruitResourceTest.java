@@ -257,7 +257,7 @@ public class FruitResourceTest {
     @Test
     @Order(18)
     public void testDeleteSingleFruit() {
-/*
+
         //Delete the Cherry:
         given()
                 .when().delete("/fruits/" + CHERRY_UUID)
@@ -275,8 +275,7 @@ public class FruitResourceTest {
                         not(containsString("Cherry")),
                         containsString("Apple"),
                         containsString("Banana"));
-
- */
+        
     }
 
 
