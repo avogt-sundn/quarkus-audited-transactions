@@ -1,5 +1,9 @@
 default:
-    tags: openshift,test
+  tags: 
+    - openshift
+    - test
+
+
     
 # This file is a template, and might need editing before it works on your project.
 image: ayufan/openshift-cli
