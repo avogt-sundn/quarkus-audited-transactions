@@ -6,15 +6,20 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.hibernate.envers.Audited;
 
+import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
 import java.util.UUID;
 
 @Entity
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Audited
 @Data
 @RequiredArgsConstructor
@@ -24,20 +29,23 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
      * the primary key is taken from here. do not rename the field!
      */
     @Id
+    @EqualsAndHashCode.Include
     @NonNull
     UUID id;
     @NonNull
-    @EqualsAndHashCode.Exclude
     boolean activeRevision;
-    @EqualsAndHashCode.Exclude
     Integer editedRevision;
     @NonNull
-    @EqualsAndHashCode.Exclude
     String name;
     @NonNull
-    @EqualsAndHashCode.Exclude
     String value;
-
+    @JsonbTransient
+    @ToString.Exclude
+    @ManyToOne
+    @JoinTable(name = "fruit_nutritionvalue",
+            joinColumns = @JoinColumn(name = "values_id"),
+            inverseJoinColumns = @JoinColumn(name = "fruit_id"))
+    Fruit fruit;
 
     @Override
     public void generateId() {

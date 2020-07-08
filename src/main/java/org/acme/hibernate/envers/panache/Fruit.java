@@ -15,6 +15,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -25,7 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Entity
 @Cacheable
 @Data
@@ -38,6 +40,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      * the primary key is taken from here. do not rename the field!
      */
     @Id
+    @EqualsAndHashCode.Include
     @NonNull
     UUID id;
     /**
@@ -48,12 +51,17 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     Integer editedRevision;
 
     @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @JoinTable(name = "fruit_nutritionvalue",
+            joinColumns = @JoinColumn(name = "fruit_id"),
+            inverseJoinColumns = @JoinColumn(name = "values_id"))
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
     @javax.validation.constraints.NotNull
+    @NonNull
     String name;
     @javax.validation.constraints.NotNull
+    @NonNull
     String color;
 
     public Fruit(UUID uuid, boolean b, String name, String color) {
@@ -87,4 +95,5 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         this.values.addAll(nutritionValues);
 
     }
+
 }
