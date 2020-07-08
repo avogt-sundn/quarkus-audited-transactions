@@ -13,8 +13,6 @@ import org.hibernate.envers.Audited;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import java.util.UUID;
 
@@ -42,9 +40,6 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
     @JsonbTransient
     @ToString.Exclude
     @ManyToOne
-    @JoinTable(name = "fruit_nutritionvalue",
-            joinColumns = @JoinColumn(name = "values_id"),
-            inverseJoinColumns = @JoinColumn(name = "fruit_id"))
     Fruit fruit;
 
     @Override

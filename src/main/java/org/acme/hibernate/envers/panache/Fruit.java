@@ -15,8 +15,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,10 +48,8 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     boolean activeRevision;
     Integer editedRevision;
 
-    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
-    @JoinTable(name = "fruit_nutritionvalue",
-            joinColumns = @JoinColumn(name = "fruit_id"),
-            inverseJoinColumns = @JoinColumn(name = "values_id"))
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER,
+            mappedBy = "fruit")
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
