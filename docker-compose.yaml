@@ -3,7 +3,7 @@ version: '2.0'
 services:
 
   postgresql:
-    image: quay.io/coreos/postgres:latest
+    image: postgres:latest
     ports:
       - "5432:5432"
     environment:
@@ -15,11 +15,13 @@ services:
     image: quay.io/keycloak/keycloak:latest
     ports:
       - "8181:8080"
+    command:
+      - start-dev
+      - --import-realm
     environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
-      KEYCLOAK_IMPORT: "/tmp/realm.json -Dkeycloak.profile.feature.upload_scripts=enabled"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin"
       DB_VENDOR: h2
 
-    volumes:
-      - ./src/test/resources/docker-compose/keycloak-import.json:/tmp/realm.json
+#    volumes:
+#      - ./src/test/resources/docker-compose/keycloak-import.json:/opt/keycloak/data/import
