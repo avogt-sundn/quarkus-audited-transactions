@@ -1,0 +1,61 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.217.4/containers/azure-functions-java-11
+{
+    "name": "Java 17 Quarkus",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            // Update the VARIANT arg to pick a Java version: 8, 11, 17
+            // Append -bullseye or -buster to pin to an OS version.
+            // Use the -bullseye variants on local arm64/Apple Silicon.
+            "VARIANT": "17-bullseye",
+            // Options
+            "INSTALL_MAVEN": "false",
+            // no maven here: use maven wrapper instead `./mvnw`
+            "MAVEN_VERSION": "3.8.6",
+            "INSTALL_GRADLE": "false",
+            "NODE_VERSION": "lts/*"
+        }
+    },
+    "forwardPorts": [
+        7071
+    ],
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+        "terminal.integrated.shell.linux": "/usr/bin/zsh"
+    },
+    "mounts": [
+        "source=localcache,target=/home/vscode/.m2,type=volume",
+        "source=${localEnv:HOME}/.vscode/.zsh_history,target=/home/vscode/.zsh_history,type=bind",
+        "source=${env:HOME}${env:USERPROFILE}/.kube,target=/home/vscode/.kube,type=bind"
+    ],
+    "postCreateCommand": "sudo chown -R vscode.vscode /home/vscode/.m2",
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
+        "ms-azuretools.vscode-azurefunctions",
+        "vscjava.vscode-java-pack",
+        "esbenp.prettier-vscode",
+        "mhutchie.git-graph",
+        "donjayamanne.githistory",
+        "waderyan.gitblame",
+        "SonarSource.sonarlint-vscode",
+        "DotJoshJohnson.xml",
+        "redhat.vscode-xml",
+        "redhat.vscode-quarkus"
+    ],
+    "containerEnv": {
+        "DOCKER_NETWORK": "docker-default-network",
+        "GRAALVM_HOME": "/opt/mandrel",
+        "JAVA_HOME": "/usr/lib/jvm/msopenjdk-current"
+    },
+    // Use 'initializeCommand' to run commands on the host before container gets created.
+    "initializeCommand": "touch ${localEnv:HOME}/.vscode/.zsh_history;docker network create docker-default-network || echo Fine. Using existing network.",
+    "runArgs": [
+        "--network=docker-default-network", // change this once you rename the project folder!
+        "--hostname=${localWorkspaceFolderBasename}"
+    ], // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    },
+}
