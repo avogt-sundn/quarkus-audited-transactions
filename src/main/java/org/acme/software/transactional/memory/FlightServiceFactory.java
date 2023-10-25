@@ -2,9 +2,7 @@ package org.acme.software.transactional.memory;
 
 import org.jboss.stm.Container;
 
-import javax.enterprise.context.ApplicationScoped;
-
-@ApplicationScoped
+@jakarta.enterprise.context.ApplicationScoped
 class FlightServiceFactory {
     private FlightService flightServiceProxy;
 

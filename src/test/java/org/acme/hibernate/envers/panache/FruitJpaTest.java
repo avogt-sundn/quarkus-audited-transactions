@@ -1,8 +1,10 @@
 package org.acme.hibernate.envers.panache;
 
-import io.quarkus.hibernate.orm.panache.Panache;
-import io.quarkus.test.junit.QuarkusTest;
-import lombok.extern.slf4j.Slf4j;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Arrays;
+import java.util.UUID;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -10,11 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import javax.transaction.Transactional;
-import java.util.Arrays;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import io.quarkus.hibernate.orm.panache.Panache;
+import io.quarkus.test.junit.QuarkusTest;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
 @QuarkusTest
 @Transactional

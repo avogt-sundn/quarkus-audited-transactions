@@ -1,21 +1,5 @@
 package org.acme.global;
 
-import lombok.extern.slf4j.Slf4j;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.client.ClientResponseFilter;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.Provider;
-import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
@@ -30,6 +14,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicLong;
+
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
+import jakarta.ws.rs.client.ClientResponseContext;
+import jakarta.ws.rs.client.ClientResponseFilter;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.ext.Provider;
+import jakarta.ws.rs.ext.WriterInterceptor;
+import jakarta.ws.rs.ext.WriterInterceptorContext;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Based on org.glassfish.jersey.filter.LoggingFilter
@@ -167,7 +167,7 @@ public class LoggingFilter implements ContainerRequestFilter, ClientRequestFilte
     }
 
     @Override
-    public void filter(final ClientRequestContext requestContext, final ClientResponseContext responseContext)
+    public void filter(final jakarta.ws.rs.client.ClientRequestContext requestContext, final ClientResponseContext responseContext)
             throws IOException {
 
         final Object requestId = requestContext.getProperty(LoggingFilter.LOGGING_ID_PROPERTY);

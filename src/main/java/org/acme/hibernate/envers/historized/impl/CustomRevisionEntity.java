@@ -1,11 +1,12 @@
 package org.acme.hibernate.envers.historized.impl;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.hibernate.envers.DefaultRevisionEntity;
 import org.hibernate.envers.RevisionEntity;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 
 @EqualsAndHashCode(callSuper = true)
 @Entity

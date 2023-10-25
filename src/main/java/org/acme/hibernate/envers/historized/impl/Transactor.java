@@ -1,13 +1,13 @@
 package org.acme.hibernate.envers.historized.impl;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 
 @Named(Transactor.TRANSACTOR)
-@ApplicationScoped
+@Dependent
 @Transactional(Transactional.TxType.REQUIRES_NEW)
 public class Transactor<T> {
     public static final String TRANSACTOR = "transactor";

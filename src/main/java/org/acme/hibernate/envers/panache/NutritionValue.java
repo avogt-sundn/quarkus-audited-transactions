@@ -1,20 +1,21 @@
 package org.acme.hibernate.envers.panache;
 
+import java.util.UUID;
+
+import org.acme.hibernate.envers.historized.api.Historizable;
+import org.hibernate.envers.Audited;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.json.bind.annotation.JsonbTransient;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import org.acme.hibernate.envers.historized.api.Historizable;
-import org.hibernate.envers.Audited;
-
-import javax.json.bind.annotation.JsonbTransient;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import java.util.UUID;
 
 @Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)

@@ -1,6 +1,10 @@
 package org.acme.hibernate.envers.historized.impl;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.acme.hibernate.envers.historized.api.Historized;
 import org.hibernate.envers.AuditReader;
@@ -10,16 +14,13 @@ import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.CDI;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import jakarta.enterprise.context.spi.CreationalContext;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class HistorizedRepository<T extends Historizable<I>, I> {

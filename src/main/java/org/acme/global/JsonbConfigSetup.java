@@ -1,14 +1,15 @@
 package org.acme.global;
 
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.json.bind.JsonbConfig;
-import javax.json.bind.config.PropertyNamingStrategy;
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
+import static org.eclipse.yasson.YassonConfig.ZERO_TIME_PARSE_DEFAULTING;
+
 import java.util.Locale;
 
-import static org.eclipse.yasson.YassonConfig.ZERO_TIME_PARSE_DEFAULTING;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbConfig;
+import jakarta.json.bind.config.PropertyNamingStrategy;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * https://stackoverflow.com/questions/55234056/how-do-you-adjust-json-config-in-quarkus

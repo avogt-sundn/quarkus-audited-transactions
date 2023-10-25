@@ -1,21 +1,5 @@
 package org.acme.hibernate.envers.panache;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import org.acme.hibernate.envers.historized.api.Historizable;
-import org.hibernate.envers.Audited;
-
-import javax.persistence.Cacheable;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +8,24 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.acme.hibernate.envers.historized.api.Historizable;
+import org.hibernate.envers.Audited;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Entity
@@ -53,10 +55,10 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
-    @javax.validation.constraints.NotNull
+    @NotNull
     @NonNull
     String name;
-    @javax.validation.constraints.NotNull
+    @NotNull
     @NonNull
     String color;
 

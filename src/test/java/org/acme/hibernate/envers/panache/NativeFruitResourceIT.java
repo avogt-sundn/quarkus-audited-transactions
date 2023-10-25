@@ -1,8 +1,8 @@
 package org.acme.hibernate.envers.panache;
 
-import io.quarkus.test.junit.NativeImageTest;
+import io.quarkus.test.junit.QuarkusIntegrationTest;
 
-@NativeImageTest
+@QuarkusIntegrationTest
 public class NativeFruitResourceIT extends FruitResourceTest {
 
     // Runs the same tests as the parent class
