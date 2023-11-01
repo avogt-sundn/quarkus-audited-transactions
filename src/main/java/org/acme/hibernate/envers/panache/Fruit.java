@@ -12,6 +12,9 @@ import java.util.stream.Stream;
 import org.acme.hibernate.envers.historized.api.Historizable;
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Cacheable;
 import jakarta.persistence.CascadeType;
@@ -26,14 +29,19 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Entity
 @Cacheable
 @Data
+@ToString
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Audited
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     /**
@@ -44,29 +52,31 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @NonNull
     UUID id;
     /**
-     * only active entities are fetched by queries, representing a current state at one point in time.
+     * only active entities are fetched by queries, representing a current state at
+     * one point in time.
      * if active is false, this entity is an edited version.
      */
     boolean activeRevision;
     Integer editedRevision;
 
-    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER,
-            mappedBy = "fruit")
+    @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, mappedBy = "fruit")
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = true)
     @NotNull
-    @NonNull
     String name;
     @NotNull
-    @NonNull
     String color;
 
-    public Fruit(UUID uuid, boolean b, String name, String color) {
+    public Fruit(UUID uuid, boolean isActiveRevision, String name, String color) {
         this.id = uuid;
-        this.activeRevision = b;
+        this.activeRevision = isActiveRevision;
         this.name = name;
         this.color = color;
+    }
+
+    public Fruit(UUID uuid, String name, String color) {
+        this(uuid, false, name, color);
     }
 
     Fruit copy() {
@@ -74,7 +84,8 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         fruit.id = id;
         fruit.name = name;
         fruit.color = color;
-        // if there is a set, copy values into a new set and set reference to the new fruit
+        // if there is a set, copy values into a new set and set reference to the new
+        // fruit
         fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
                 .map(n -> n.copy()).collect(Collectors.toSet());
         return fruit;
@@ -91,7 +102,9 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         }
         List<NutritionValue> nutritionValues = Arrays.asList(val);
         this.values.addAll(nutritionValues);
-
+        nutritionValues.forEach(nv -> {
+            nv.fruit = this;
+        });
     }
 
 }
