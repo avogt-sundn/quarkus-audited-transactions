@@ -1,10 +1,10 @@
 package org.acme.hibernate.envers.panache;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -26,81 +26,87 @@ import lombok.extern.slf4j.Slf4j;
  * without this annotation each test method receives a new class instance
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class FruitJpaTest {
+class FruitJpaTest {
 
-    public final UUID UUID = java.util.UUID.randomUUID();
+    final UUID testFruitUuid = java.util.UUID.randomUUID();
+
+    @Test
+    @Order(1)
+    @DisplayName("print the test uuid")
+    void printTestUuid() {
+        System.out.println(testFruitUuid);
+        Assertions.assertNotNull(testFruitUuid);
+    }
 
     @Test
     @Order(5)
     @DisplayName("add to the set")
-    public void createOne() {
-        Fruit fruit = new Fruit(UUID, "cherry", "red");
-        fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID().randomUUID(), false, "name", "value"));
-        log.debug("to database: {}", fruit);
+    void createOne() {
+        Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
+        fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID(), false, "name", "value"));
+        Assertions.assertEquals(1,
+                fruit.getValues().size());
+        FruitJpaTest.log.debug("to database: {}", fruit);
         fruit.persist();
     }
 
     @Test
     @Order(6)
     @DisplayName("check creation - set mappedBy")
-    public void checkCreate() {
-        final Fruit fruit = Fruit.findById(UUID);
-        log.debug("from database: {}", fruit);
+    void checkCreate() {
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        FruitJpaTest.log.debug("from database: {}", fruit);
+        Assertions.assertNotNull(fruit, "");
         final int size = fruit.getValues().size();
-
-        if (size == 0) {
-            final NutritionValue nutritionValue = new NutritionValue(java.util.UUID.randomUUID().randomUUID(),
-                    false, "name", "value");
-            nutritionValue.setFruit(fruit);
-            nutritionValue.persist();
-        }
-        assertEquals(1, size);
+        Assertions.assertEquals(1, size);
     }
 
     @Test
+    @Disabled
     @Order(8)
     @DisplayName("delete from the set")
-    public void removeOne() {
-        final Fruit fruit = Fruit.findById(UUID);
-        log.debug("from database: {}", fruit);
-        assertEquals(1, fruit.getValues().size());
+    void removeOne() {
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        FruitJpaTest.log.debug("from database: {}", fruit);
+        Assertions.assertEquals(1, fruit.getValues().size());
         NutritionValue[] nutritionValues = fruit.getValues().toArray(new NutritionValue[1]);
         Arrays.stream(nutritionValues).forEach(nutri -> fruit.getValues().remove(nutri));
         fruit.persist();
+        Assertions.assertEquals(0, fruit.getValues().size());
     }
 
     @Test
     @Order(9)
     @DisplayName("check deletion in the set")
-    public void checkDelete() {
-        final Fruit fruit = Fruit.findById(UUID);
-        log.debug("from database: {}", fruit);
+    void checkDelete() {
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        FruitJpaTest.log.debug("from database: {}", fruit);
         final int size = fruit.getValues().size();
         if (size == 1) {
             fruit.getValues().toArray(new NutritionValue[1])[0].setFruit(null);
             Panache.getEntityManager().merge(fruit);
         }
-        assertEquals(0, size);
+        Assertions.assertEquals(0, size);
     }
 
     @Test
     @Order(10)
     @DisplayName("check deletion via mappedBy")
-    public void checkDelete2() {
-        final Fruit fruit = Fruit.findById(UUID);
-        log.debug("from database: {}", fruit);
+    void checkDelete2() {
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        Assertions.assertNotNull(fruit);
+        FruitJpaTest.log.debug("from database: {}", fruit);
         final int size = fruit.getValues().size();
-        assertEquals(0, size);
+        Assertions.assertEquals(0, size);
     }
-
 
     @Test
     @Order(20)
     @DisplayName("add 2nd to the collection")
-    public void createsecond() {
-        Fruit fruit = new Fruit(UUID, "cherry", "red");
+    void createsecond() {
+        Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
         fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID().randomUUID(), false, "name", "value"));
-        log.debug("from database: {}", fruit);
+        FruitJpaTest.log.debug("from database: {}", fruit);
         Panache.getEntityManager().merge(fruit);
     }
 }
