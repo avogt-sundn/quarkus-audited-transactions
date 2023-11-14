@@ -51,6 +51,23 @@ class FruitJpaTest {
     }
 
     @Test
+    @Order(5)
+    @DisplayName("add to the set")
+    void createWithSet_NoBackReference() {
+
+        Fruit fruit = new Fruit("cherry", "red");
+        fruit.addNutritions(new NutritionValue("color", "name"));
+        
+        Assertions.assertEquals(1,
+                fruit.getValues().size());
+        FruitJpaTest.log.debug("to database: {}", fruit);
+        fruit.persist();
+        Assertions.assertNotNull(fruit.id);
+        Assertions.assertNotNull(fruit.getValues().iterator().next().fruit.id);
+
+    }
+
+    @Test
     @Order(6)
     @DisplayName("check creation - set mappedBy")
     void checkCreate() {

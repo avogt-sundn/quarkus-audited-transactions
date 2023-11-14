@@ -63,12 +63,12 @@ class FruitResourceTest {
     }
 
     @Inject
-    ObjectMapper jacksObjectMapper;
+    ObjectMapper objectMapper;
 
-@Test
+    @Test
     @Order(-1)
     void checkJacksonSetup() {
-        Assertions.assertTrue(this.jacksObjectMapper.isEnabled(JsonReadFeature.ALLOW_JAVA_COMMENTS.mappedFeature()));
+        Assertions.assertTrue(this.objectMapper.isEnabled(JsonReadFeature.ALLOW_JAVA_COMMENTS.mappedFeature()));
     }
 
     @Test

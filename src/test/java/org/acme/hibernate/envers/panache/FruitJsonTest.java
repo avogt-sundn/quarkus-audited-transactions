@@ -35,23 +35,65 @@ class FruitJsonTest {
     @Test
     @Order(1)
     @DisplayName("print the test uuid")
-    void writeJson() throws JsonProcessingException {
+    void writeJsonAndReadBack() throws JsonProcessingException {
+        String json;
+        UUID randomUUID = UUID.randomUUID();
+        {
 
-        Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
-        fruit.addNutritions(new NutritionValue(UUID.randomUUID(), false, "vitamin", "d12"));
-        String json = jacksonMapper.writeValueAsString(fruit);
+            Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
 
-        FruitJsonTest.log.info("serializing Fruit+NutritionValue to this json string {}", json);
-        Assertions.assertNotNull(json);
-        Assertions.assertTrue(json.contains("cherry"));
-        Assertions.assertTrue(json.contains("vitamin"));
+            fruit.addNutritions(new NutritionValue(randomUUID,
 
+                    false, "vitamin", "d12"));
+            json = jacksonMapper.writeValueAsString(fruit);
+
+            FruitJsonTest.log.info("serializing Fruit+NutritionValue to this json string {}", json);
+            Assertions.assertNotNull(json);
+            Assertions.assertTrue(json.contains("cherry"));
+            Assertions.assertTrue(json.contains("vitamin"));
+        }
+        {
+            // read back
+            Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+            Assertions.assertNotNull(fruit);
+            NutritionValue value = fruit.getValues().iterator().next();
+            Assertions.assertTrue(value.name.equals("vitamin"));
+            Assertions.assertTrue(value.value.equals("d12"));
+
+        }
     }
 
     @Test
     @Order(1)
     @DisplayName("print the test uuid")
-    void readJson() throws JsonProcessingException {
+    void writeManyBackReference() throws JsonProcessingException {
+        String json;
+        {
+
+            Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
+            fruit.addNutritions(new NutritionValue(UUID.randomUUID(),
+                    false, "vitamin", "d12"));
+            json = jacksonMapper.writeValueAsString(fruit);
+
+            FruitJsonTest.log.info("serializing Fruit+NutritionValue to this json string {}", json);
+            Assertions.assertNotNull(json);
+            Assertions.assertTrue(json.contains("cherry"));
+            Assertions.assertTrue(json.contains("vitamin"));
+        }
+        {
+            // read back
+            Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+            Assertions.assertNotNull(fruit);
+            NutritionValue value = fruit.getValues().iterator().next();
+            Assertions.assertTrue(value.name.equals("vitamin"));
+            Assertions.assertTrue(value.value.equals("d12"));
+        }
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("print the test uuid")
+    void readOneToManyWithBackreference() throws JsonProcessingException {
 
         final String json = """
                 {
@@ -77,13 +119,13 @@ class FruitJsonTest {
         NutritionValue value = fruit.getValues().iterator().next();
         Assertions.assertTrue(value.name.equals("vitamin"));
         Assertions.assertTrue(value.value.equals("d12"));
-
+        Assertions.assertEquals("3576c18b-b246-4975-b01a-ed9da6da895e", value.fruit.id.toString());
     }
 
     @Test
     @Order(2)
     @DisplayName("print the test uuid")
-    void readJson_backreferenceMissing() throws JsonProcessingException {
+    void readOneToMany_NoBackreference() throws JsonProcessingException {
 
         final String json = """
                 {
@@ -92,7 +134,6 @@ class FruitJsonTest {
                   "values": [
                     {
                       "id": "66763a34-66c6-4c9c-8625-97800519ba29",
-                       "fruit": "3576c18b-b246-4975-b01a-ed9da6da895e",
                       "activeRevision": false,
                       "name": "vitamin",
                       "value": "d12"
@@ -109,8 +150,6 @@ class FruitJsonTest {
         NutritionValue value = fruit.getValues().iterator().next();
         Assertions.assertTrue(value.name.equals("vitamin"));
         Assertions.assertTrue(value.value.equals("d12"));
-
     }
-
 
 }

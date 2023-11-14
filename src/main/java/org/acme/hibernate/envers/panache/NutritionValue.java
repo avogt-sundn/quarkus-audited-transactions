@@ -26,10 +26,7 @@ import lombok.ToString;
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
-
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class NutritionValue extends PanacheEntityBase implements Historizable<UUID> {
     /**
      * the primary key is taken from here. do not rename the field!
@@ -64,6 +61,11 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
         nutritionValue.name = this.name;
         nutritionValue.value = this.value;
         return nutritionValue;
+    }
+
+    public NutritionValue(String name, String value) {
+        this.name = name;
+        this.value = value;
     }
 
 }

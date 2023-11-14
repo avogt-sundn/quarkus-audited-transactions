@@ -39,9 +39,7 @@ import lombok.ToString;
 @RequiredArgsConstructor
 @NoArgsConstructor
 @Audited
-@JsonIdentityInfo(
-        generator = ObjectIdGenerators.PropertyGenerator.class,
-        property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     /**
@@ -50,6 +48,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @Id
     @EqualsAndHashCode.Include
     @NonNull
+    @Column( unique = true)
     UUID id;
     /**
      * only active entities are fetched by queries, representing a current state at
@@ -62,7 +61,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, mappedBy = "fruit")
     Set<NutritionValue> values;
 
-    @Column(length = 40, unique = true)
+    @Column(length = 40, unique = false)
     @NotNull
     String name;
     @NotNull
@@ -100,11 +99,20 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         if (null == this.values) {
             this.values = new HashSet<NutritionValue>();
         }
+        if (this.getId() == null) {
+            this.generateId();
+        }
         List<NutritionValue> nutritionValues = Arrays.asList(val);
+        nutritionValues.stream().filter(n -> n.id==null).forEach(n -> n.setId(UUID.randomUUID()));
         this.values.addAll(nutritionValues);
         nutritionValues.forEach(nv -> {
             nv.fruit = this;
         });
+    }
+
+    public Fruit(String name, String color) {
+        this.name = name;
+        this.color = color;
     }
 
 }
