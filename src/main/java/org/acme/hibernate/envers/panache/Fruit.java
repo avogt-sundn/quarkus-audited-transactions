@@ -48,7 +48,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     @Id
     @EqualsAndHashCode.Include
     @NonNull
-    @Column( unique = true)
+    @Column(unique = true)
     UUID id;
     /**
      * only active entities are fetched by queries, representing a current state at
@@ -97,20 +97,18 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
 
     public void addNutritions(NutritionValue... val) {
         if (null == this.values) {
-            this.values = new HashSet<NutritionValue>();
+            this.values = new HashSet<>();
         }
         if (this.getId() == null) {
             this.generateId();
         }
         List<NutritionValue> nutritionValues = Arrays.asList(val);
-        nutritionValues.stream().filter(n -> n.id==null).forEach(n -> n.setId(UUID.randomUUID()));
+        nutritionValues.stream().filter(n -> n.id == null).forEach(n -> n.setId(UUID.randomUUID()));
         this.values.addAll(nutritionValues);
-        nutritionValues.forEach(nv -> {
-            nv.fruit = this;
-        });
+        nutritionValues.forEach(nv -> nv.fruit = this);
     }
 
-    public Fruit(String name, String color) {
+    public Fruit(@NonNull String name, String color) {
         this.name = name;
         this.color = color;
     }
