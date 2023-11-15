@@ -14,6 +14,7 @@ import org.hibernate.envers.Audited;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Cacheable;
@@ -59,6 +60,7 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     Integer editedRevision;
 
     @OneToMany(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER, mappedBy = "fruit")
+    @JsonDeserialize
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = false)
@@ -95,6 +97,12 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         this.id = UUID.randomUUID();
     }
 
+    public void setValues(Set<NutritionValue> set) {
+        this.values = set;
+        if (this.id !=null && this.values !=null){
+            this.values.stream().filter(v-> v.fruit==null).forEach(v-> v.fruit=this);
+        }
+    }
     public void addNutritions(NutritionValue... val) {
         if (null == this.values) {
             this.values = new HashSet<>();

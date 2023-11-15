@@ -6,7 +6,6 @@ import org.acme.global.JacksonSetup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -25,27 +24,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class FruitJsonTest {
 
-    final UUID testFruitUuid = UUID.randomUUID();
+    final static UUID testFruitUuid = UUID.randomUUID();
 
-    ObjectMapper jacksonMapper = new ObjectMapper();
+    static ObjectMapper jacksonMapper = new ObjectMapper();
     static {
-        new JacksonSetup().customize(new ObjectMapper());
+        new JacksonSetup().customize(FruitJsonTest.jacksonMapper);
     }
 
     @Test
-    @Order(1)
     @DisplayName("print the test uuid")
     void writeJsonAndReadBack() throws JsonProcessingException {
         String json;
         UUID randomUUID = UUID.randomUUID();
         {
 
-            Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
+            Fruit fruit = new Fruit(FruitJsonTest.testFruitUuid, "cherry", "red");
 
             fruit.addNutritions(new NutritionValue(randomUUID,
 
                     false, "vitamin", "d12"));
-            json = jacksonMapper.writeValueAsString(fruit);
+            json = FruitJsonTest.jacksonMapper.writeValueAsString(fruit);
 
             FruitJsonTest.log.info("serializing Fruit+NutritionValue to this json string {}", json);
             Assertions.assertNotNull(json);
@@ -54,7 +52,7 @@ class FruitJsonTest {
         }
         {
             // read back
-            Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+            Fruit fruit = FruitJsonTest.jacksonMapper.readValue(json, Fruit.class);
             Assertions.assertNotNull(fruit);
             NutritionValue value = fruit.getValues().iterator().next();
             Assertions.assertTrue(value.name.equals("vitamin"));
@@ -64,16 +62,15 @@ class FruitJsonTest {
     }
 
     @Test
-    @Order(1)
     @DisplayName("print the test uuid")
     void writeManyBackReference() throws JsonProcessingException {
         String json;
         {
 
-            Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
+            Fruit fruit = new Fruit(FruitJsonTest.testFruitUuid, "cherry", "red");
             fruit.addNutritions(new NutritionValue(UUID.randomUUID(),
                     false, "vitamin", "d12"));
-            json = jacksonMapper.writeValueAsString(fruit);
+            json = FruitJsonTest.jacksonMapper.writeValueAsString(fruit);
 
             FruitJsonTest.log.info("serializing Fruit+NutritionValue to this json string {}", json);
             Assertions.assertNotNull(json);
@@ -82,7 +79,7 @@ class FruitJsonTest {
         }
         {
             // read back
-            Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+            Fruit fruit = FruitJsonTest.jacksonMapper.readValue(json, Fruit.class);
             Assertions.assertNotNull(fruit);
             NutritionValue value = fruit.getValues().iterator().next();
             Assertions.assertTrue(value.name.equals("vitamin"));
@@ -91,7 +88,6 @@ class FruitJsonTest {
     }
 
     @Test
-    @Order(1)
     @DisplayName("print the test uuid")
     void readOneToManyWithBackreference() throws JsonProcessingException {
 
@@ -112,18 +108,17 @@ class FruitJsonTest {
                   "color": "red"
                 }
                 """;
-        Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+        Fruit fruit = FruitJsonTest.jacksonMapper.readValue(json, Fruit.class);
         Assertions.assertNotNull(fruit);
 
         FruitJsonTest.log.info(fruit.toString());
         NutritionValue value = fruit.getValues().iterator().next();
-        Assertions.assertTrue(value.name.equals("vitamin"));
-        Assertions.assertTrue(value.value.equals("d12"));
+        Assertions.assertEquals("vitamin",value.name);
+        Assertions.assertEquals("d12",value.value);
         Assertions.assertEquals("3576c18b-b246-4975-b01a-ed9da6da895e", value.fruit.id.toString());
     }
 
     @Test
-    @Order(2)
     @DisplayName("print the test uuid")
     void readOneToMany_NoBackreference() throws JsonProcessingException {
 
@@ -143,13 +138,15 @@ class FruitJsonTest {
                   "color": "red"
                 }
                 """;
-        Fruit fruit = jacksonMapper.readValue(json, Fruit.class);
+        Fruit fruit = FruitJsonTest.jacksonMapper.readValue(json, Fruit.class);
         Assertions.assertNotNull(fruit);
 
         FruitJsonTest.log.info(fruit.toString());
         NutritionValue value = fruit.getValues().iterator().next();
         Assertions.assertTrue(value.name.equals("vitamin"));
         Assertions.assertTrue(value.value.equals("d12"));
+
+        Assertions.assertEquals(fruit, value.fruit);
     }
 
 }

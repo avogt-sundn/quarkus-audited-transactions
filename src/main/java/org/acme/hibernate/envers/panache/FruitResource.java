@@ -36,4 +36,5 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
         return Fruit.findAll().list();
     }
 
+
 }

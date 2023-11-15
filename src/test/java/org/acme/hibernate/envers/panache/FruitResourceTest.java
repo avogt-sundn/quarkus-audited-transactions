@@ -39,7 +39,7 @@ class FruitResourceTest {
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "_changed";
     final static String CHANGED_COLOR_2ND = "_changed_2nd";
-    static final String NUTRI_NAME = "_not_changed_yet";
+    static final String NUTRI_NAME = "_nutri_name";
 
     @BeforeAll
     static void enableLogging() {
