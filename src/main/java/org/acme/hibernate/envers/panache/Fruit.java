@@ -97,12 +97,20 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         this.id = UUID.randomUUID();
     }
 
+    /**
+     * called during deserialiation, this setter allows to fix the back references
+     * from Nutrition to the parent Fruit.
+     *
+     * @param set
+     */
     public void setValues(Set<NutritionValue> set) {
         this.values = set;
-        if (this.id !=null && this.values !=null){
-            this.values.stream().filter(v-> v.fruit==null).forEach(v-> v.fruit=this);
+        if (this.id != null && this.values != null) {
+            Fruit parent = this;
+            this.values.stream().filter(v -> v.fruit == null).forEach(v -> v.fruit = parent);
         }
     }
+
     public void addNutritions(NutritionValue... val) {
         if (null == this.values) {
             this.values = new HashSet<>();

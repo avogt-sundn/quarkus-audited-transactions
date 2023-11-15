@@ -23,6 +23,7 @@ import io.restassured.config.LogConfig;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.parsing.Parser;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class WriteSingleFruitTest {
 
-    private static final UUID RANDOM_UUID = UUID.randomUUID();
-    static final String NUTRITION_IS_HERE = "nutrition-is-here";
+    private final static UUID RANDOM_UUID = UUID.randomUUID();
+    private final static String NUTRITION_IS_HERE = "nutrition-is-here";
     /**
      * the test will create a new Fruit to this uuid and use it throughout all test
      * methods.
@@ -43,15 +44,13 @@ class WriteSingleFruitTest {
      * robust when
      * running in a suite with other QuarkusTest tests.
      */
-    final static UUID CHERRY_UUID = WriteSingleFruitTest.RANDOM_UUID;
+    private final static UUID CHERRY_UUID = UUID.randomUUID();
     final static String CHERRY_NAME = "Cherry";
     final static String NO_COLOR = "no";
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "_changed_color";
     final static String CHANGED_COLOR_2ND = "_2nd_changed_color";
     static final String NUTRI_NAME = "_nutri_name";
-
-    final UUID testFruitUuid = WriteSingleFruitTest.RANDOM_UUID;
 
     @BeforeAll
     static void enableLogging() {
@@ -81,7 +80,7 @@ class WriteSingleFruitTest {
     @Test
     @Order(2)
     void initialDataSet() throws JsonProcessingException {
-        Fruit fruit = new Fruit(FruitResourceTest.CHERRY_UUID, true, FruitResourceTest.CHERRY_NAME,
+        Fruit fruit = new Fruit(WriteSingleFruitTest.CHERRY_UUID, true, FruitResourceTest.CHERRY_NAME,
                 FruitResourceTest.NO_COLOR);
         fruit.addNutritions(
                 new NutritionValue(WriteSingleFruitTest.RANDOM_UUID, true,
@@ -94,7 +93,7 @@ class WriteSingleFruitTest {
         Assertions.assertNotNull(nutri.fruit);
         Assertions.assertEquals(WriteSingleFruitTest.CHERRY_UUID, nutri.fruit.id);
 
-        Fruit readFromDB = (Fruit) Fruit.findById(FruitResourceTest.CHERRY_UUID);
+        Fruit readFromDB = (Fruit) Fruit.findById(WriteSingleFruitTest.CHERRY_UUID);
         Assertions.assertEquals(1, readFromDB.values.size());
     }
 
@@ -103,8 +102,8 @@ class WriteSingleFruitTest {
     void checkInitialDataSet() {
 
         // List all, should have min. 3 fruits the database has initially:
-        final String oneValidId = RestAssured.given()
-                .when().get("/fruits/" + FruitResourceTest.CHERRY_UUID)
+        final ResponseBodyExtractionOptions response = RestAssured.given()
+                .when().get("/fruits/" + WriteSingleFruitTest.CHERRY_UUID)
                 .then()
                 .statusCode(200)
                 .body(
@@ -115,9 +114,11 @@ class WriteSingleFruitTest {
                 // 'it' is a gpath special keyword referencing the current node
                 // 'name' and 'id' are the field names from the fruit class that got serialized
                 // to json
-                .extract().body().jsonPath().getString("find{ it.name == '" + FruitResourceTest.CHERRY_NAME + "' }.id");
+                .extract().body();
+        String oneValidId = response.jsonPath()
+                .getString("findAll {it -> it.name == 'Cherry' }.id");
 
-        Assertions.assertEquals(FruitResourceTest.CHERRY_UUID.toString(), oneValidId);
+        Assertions.assertEquals(WriteSingleFruitTest.CHERRY_UUID.toString(), oneValidId);
     }
 
     void createNew(Fruit fruit) throws JsonProcessingException {

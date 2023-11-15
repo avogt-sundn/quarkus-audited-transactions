@@ -29,11 +29,13 @@ import jakarta.inject.Inject;
 class FruitResourceTest {
 
     /**
-     * the test will create a new Fruit to this uuid and use it throughout all test methods.
-     * no assumptions about the contents of the database are made which makes it robust when
+     * the test will create a new Fruit to this uuid and use it throughout all test
+     * methods.
+     * no assumptions about the contents of the database are made which makes it
+     * robust when
      * running in a suite with other QuarkusTest tests.
      */
-    final static UUID CHERRY_UUID = UUID.randomUUID();
+    private final static UUID CHERRY_UUID = UUID.randomUUID();
     final static String CHERRY_NAME = "Cherry";
     final static String NO_COLOR = "no";
     final static String CHERRY_COLOR = "red";
@@ -45,10 +47,10 @@ class FruitResourceTest {
     static void enableLogging() {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     }
+
     @BeforeAll
     static void configureRestAssured() {
     }
-
 
     @Test
     @Order(-1)
@@ -75,25 +77,24 @@ class FruitResourceTest {
     @Order(1)
     void checkInitialDataSet() {
 
-        //List all, should have min. 3 fruits the database has initially:
+        // List all, should have min. 3 fruits the database has initially:
         final String oneValidId = RestAssured.given()
                 .when().get("/fruits")
                 .then()
                 .statusCode(200)
                 .body(
-                    CoreMatchers.containsString(FruitResourceTest.NUTRI_NAME),
+                        CoreMatchers.containsString(FruitResourceTest.NUTRI_NAME),
                         CoreMatchers.containsString(FruitResourceTest.CHERRY_NAME),
                         CoreMatchers.containsString("Apple"),
-                        CoreMatchers.containsString("Banana")
-                )
+                        CoreMatchers.containsString("Banana"))
                 // 'find' is gpath special keyword introduncing a filter
                 // 'it' is a gpath special keyword referencing the current node
-                // 'name' and 'id' are the field names from the fruit class that got serialized to json
+                // 'name' and 'id' are the field names from the fruit class that got serialized
+                // to json
                 .extract().body().jsonPath().getString("find{ it.name == '" + FruitResourceTest.CHERRY_NAME + "' }.id");
 
         Assertions.assertEquals(FruitResourceTest.CHERRY_UUID.toString(), oneValidId);
     }
-
 
     @Test
     @Order(2)
@@ -104,8 +105,7 @@ class FruitResourceTest {
                 .statusCode(200)
                 .body("edited.ref.name", CoreMatchers.equalTo("Cherry"),
                         "active", Matchers.emptyOrNullString(),
-                        "fetchDate", IsNot.not(Matchers.emptyOrNullString())
-                );
+                        "fetchDate", IsNot.not(Matchers.emptyOrNullString()));
     }
 
     @Test
@@ -130,7 +130,7 @@ class FruitResourceTest {
         // now Change it with a put on /fruits/{id}
         final Fruit copy = baseFruit.copy();
         copy.color = FruitResourceTest.CHANGED_COLOR;
-        NutritionValue[] nutritionValues = copy.values.toArray(new NutritionValue[]{});
+        NutritionValue[] nutritionValues = copy.values.toArray(new NutritionValue[] {});
         nutritionValues[0].name = FruitResourceTest.CHANGED_COLOR;
         RestAssured.given().with().body(copy).contentType(ContentType.JSON)
                 .when().put("/fruits/" + FruitResourceTest.CHERRY_UUID)
@@ -154,8 +154,7 @@ class FruitResourceTest {
                 .body(
                         "active", Matchers.emptyOrNullString(),
                         "edited.ref.name", CoreMatchers.equalTo(FruitResourceTest.CHERRY_NAME),
-                        "edited.ref.color", CoreMatchers.equalTo(FruitResourceTest.CHANGED_COLOR)
-                );
+                        "edited.ref.color", CoreMatchers.equalTo(FruitResourceTest.CHANGED_COLOR));
     }
 
     @Test
@@ -174,7 +173,6 @@ class FruitResourceTest {
 
                 );
     }
-
 
     @Test
     @Order(11)
@@ -206,7 +204,6 @@ class FruitResourceTest {
                         "edited", Matchers.emptyOrNullString());
     }
 
-
     @Test
     @Order(13)
     @DisplayName("check active version after patch")
@@ -219,8 +216,7 @@ class FruitResourceTest {
                 .body(
                         "active.ref.name", CoreMatchers.equalTo(FruitResourceTest.CHERRY_NAME),
                         "active.ref.color", CoreMatchers.equalTo(FruitResourceTest.CHANGED_COLOR),
-                        "active.ref.values[0].name", CoreMatchers.equalTo(FruitResourceTest.CHANGED_COLOR)
-                );
+                        "active.ref.values[0].name", CoreMatchers.equalTo(FruitResourceTest.CHANGED_COLOR));
     }
 
     @Test
@@ -275,7 +271,7 @@ class FruitResourceTest {
     @Order(18)
     void testDeleteSingleFruit() {
 
-        //Delete the Cherry:
+        // Delete the Cherry:
         RestAssured.given()
                 .when().delete("/fruits/" + FruitResourceTest.CHERRY_UUID)
                 .then()
@@ -295,15 +291,13 @@ class FruitResourceTest {
 
     }
 
-
     void createNew(Fruit fruit) {
-        //List all, cherry should be missing now:
+        // List all, cherry should be missing now:
         RestAssured.given().with().body(fruit).contentType(ContentType.JSON)
                 .when().post("/fruits")
                 .then()
                 .statusCode(201)
                 .extract().body().as(Fruit.class).getName().equals(fruit.name);
     }
-
 
 }

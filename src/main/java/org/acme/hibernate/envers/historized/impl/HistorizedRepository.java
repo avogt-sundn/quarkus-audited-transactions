@@ -42,12 +42,12 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
             final Set<Bean<?>> bearerService = beanManager.getBeans(Transactor.TRANSACTOR);
             final Bean<?> bean = bearerService.toArray(new Bean<?>[0])[0];
             CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
-            final Transactor identityService = (Transactor) beanManager.getReference(bean, Transactor.class, ctx);
+            final Transactor<T> identityService = (Transactor<T>) beanManager.getReference(bean, Transactor.class, ctx);
 
             return identityService;
 
         } catch (Exception e) {
-            log.error("failed to get cdi bean: " + IdentityService.class.getName());
+            HistorizedRepository.log.error("failed to get cdi bean: " + IdentityService.class.getName());
             throw e;
         }
     }
@@ -78,7 +78,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
         // CustomRevisionEntity of the current version always know if there is an edited version
         Optional<History<T, I>> optionalHistory = loadLatestRevision(id);
 
-        log.info("loaded latest revision: {}", optionalHistory);
+        HistorizedRepository.log.info("loaded latest revision: {}", optionalHistory);
         return optionalHistory.map(hy ->
                 // we have a revision available, lets produce a Historized summary
                 new Historized<T, I>(
@@ -221,7 +221,7 @@ public class HistorizedRepository<T extends Historizable<I>, I> {
                 }
         );
         T merge = mergeAgainst.map(ma -> mergeBeans(t, ma)).orElse(t);
-        log.info("em.merge with: {}", merge);
+        HistorizedRepository.log.info("em.merge with: {}", merge);
         // commit will save the t and also create a new revision when the tx closes
         merge = createBean().commitMerge(merge);
 
