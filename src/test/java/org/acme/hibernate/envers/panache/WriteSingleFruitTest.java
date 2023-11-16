@@ -23,7 +23,6 @@ import io.restassured.config.LogConfig;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.parsing.Parser;
-import io.restassured.response.ResponseBodyExtractionOptions;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,20 +79,20 @@ class WriteSingleFruitTest {
     @Test
     @Order(2)
     void initialDataSet() throws JsonProcessingException {
-        Fruit fruit = new Fruit(WriteSingleFruitTest.CHERRY_UUID, true, FruitResourceTest.CHERRY_NAME,
+        Fruit fruit = new Fruit(CHERRY_UUID, true, CHERRY_NAME,
                 FruitResourceTest.NO_COLOR);
         fruit.addNutritions(
-                new NutritionValue(WriteSingleFruitTest.RANDOM_UUID, true,
+                new NutritionValue(RANDOM_UUID, true,
                         FruitResourceTest.NUTRI_NAME,
-                        WriteSingleFruitTest.NUTRITION_IS_HERE));
+                        NUTRITION_IS_HERE));
         createNew(fruit);
 
-        NutritionValue nutri = (NutritionValue) NutritionValue.findById(WriteSingleFruitTest.RANDOM_UUID);
+        NutritionValue nutri = (NutritionValue) NutritionValue.findById(RANDOM_UUID);
         Assertions.assertNotNull(nutri);
         Assertions.assertNotNull(nutri.fruit);
-        Assertions.assertEquals(WriteSingleFruitTest.CHERRY_UUID, nutri.fruit.id);
+        Assertions.assertEquals(CHERRY_UUID, nutri.fruit.id);
 
-        Fruit readFromDB = (Fruit) Fruit.findById(WriteSingleFruitTest.CHERRY_UUID);
+        Fruit readFromDB = (Fruit) Fruit.findById(CHERRY_UUID);
         Assertions.assertEquals(1, readFromDB.values.size());
     }
 
@@ -102,28 +101,26 @@ class WriteSingleFruitTest {
     void checkInitialDataSet() {
 
         // List all, should have min. 3 fruits the database has initially:
-        final ResponseBodyExtractionOptions response = RestAssured.given()
-                .when().get("/fruits/" + WriteSingleFruitTest.CHERRY_UUID)
+        final String oneValidId = RestAssured.given()
+                .when().get("/fruits")
                 .then()
                 .statusCode(200)
                 .body(
-                        CoreMatchers.containsString(WriteSingleFruitTest.NUTRI_NAME),
-                        CoreMatchers.containsString(WriteSingleFruitTest.NUTRITION_IS_HERE),
-                        CoreMatchers.containsString(WriteSingleFruitTest.CHERRY_NAME))
+                        CoreMatchers.containsString(NUTRI_NAME),
+                        CoreMatchers.containsString(CHERRY_NAME)
+                )
                 // 'find' is gpath special keyword introduncing a filter
                 // 'it' is a gpath special keyword referencing the current node
                 // 'name' and 'id' are the field names from the fruit class that got serialized
                 // to json
-                .extract().body();
-        String oneValidId = response.jsonPath()
-                .getString("findAll {it -> it.name == 'Cherry' }.id");
+                .extract().body().jsonPath().getString("find{ it.name == '" + CHERRY_NAME + "' }.id");
 
-        Assertions.assertEquals(WriteSingleFruitTest.CHERRY_UUID.toString(), oneValidId);
+        Assertions.assertEquals(CHERRY_UUID.toString(), oneValidId);
     }
 
     void createNew(Fruit fruit) throws JsonProcessingException {
         String json = objectMapper.writeValueAsString(fruit);
-        WriteSingleFruitTest.log.info("createNew: {}", json);
+        log.info("createNew: {}", json);
         // List all, cherry should be missing now:
         RestAssured.given().with().body(json).contentType(ContentType.JSON)
                 .when().post("/fruits")

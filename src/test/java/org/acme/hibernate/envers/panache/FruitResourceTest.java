@@ -70,7 +70,8 @@ class FruitResourceTest {
     @Test
     @Order(-1)
     void checkJacksonSetup() {
-        Assertions.assertTrue(this.objectMapper.isEnabled(JsonReadFeature.ALLOW_JAVA_COMMENTS.mappedFeature()));
+        Assertions.assertTrue(this.objectMapper.isEnabled(
+                JsonReadFeature.ALLOW_JAVA_COMMENTS.mappedFeature()), "The test needs to allow for comments in json");
     }
 
     @Test
