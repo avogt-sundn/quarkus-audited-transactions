@@ -81,14 +81,17 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     }
 
     Fruit copy() {
-        Fruit fruit = new Fruit();
+        final Fruit fruit = new Fruit();
         fruit.id = id;
         fruit.name = name;
         fruit.color = color;
         // if there is a set, copy values into a new set and set reference to the new
         // fruit
         fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
-                .map(n -> n.copy()).collect(Collectors.toSet());
+                .map(n -> n.copy()).map(n -> {
+                    n.fruit = fruit;
+                    return n;
+                }).collect(Collectors.toSet());
         return fruit;
     }
 

@@ -31,6 +31,13 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
         super(Fruit.class, entityManager);
     }
 
+    /**
+     * You will not want to pull this get-all into the HistorizedResource,
+     * because what is it really good for fetching the complete data set if only for drowning in the abundance.
+     *
+     * We have it around for the test suite, and tests only.
+     * @return all fruits that are stored
+     */
     @GET
     public List<Fruit> list() {
         return Fruit.findAll().list();
