@@ -1,6 +1,5 @@
 package org.acme.hibernate.envers.panache;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.acme.hibernate.envers.historized.api.HistorizedResource;
@@ -12,6 +11,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import lombok.NoArgsConstructor;
@@ -31,17 +31,10 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
         super(Fruit.class, entityManager);
     }
 
-    /**
-     * You will not want to pull this get-all into the HistorizedResource,
-     * because what is it really good for fetching the complete data set if only for drowning in the abundance.
-     *
-     * We have it around for the test suite, and tests only.
-     * @return all fruits that are stored
-     */
     @GET
-    public List<Fruit> list() {
-        return Fruit.findAll().list();
+    @Path("{id}/nohist")
+    public Fruit getById(@PathParam("id") UUID id) {
+        return Fruit.findById(id);
     }
-
 
 }
