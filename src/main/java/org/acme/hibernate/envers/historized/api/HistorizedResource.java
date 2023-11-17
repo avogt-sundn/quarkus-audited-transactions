@@ -24,6 +24,14 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
+ * You will derive your domain specific resource from here. Make sure to add the
+ * basic path so that the partial pathes here become available:
+ *
+ * <pre>
+ * @Path("fruit")
+ * public class FruitResource extends HistorizedResource<Fruit,UUID> { }
+ * </pre>
+ *
  * @param <T> Entity type
  * @param <I> primary key / id type
  */
@@ -133,11 +141,11 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @DELETE
     @Path("{id}")
     @Transactional
-    public Response deleteSingle(@PathParam("id") I I) {
-        if (I == null) {
+    public Response deleteSingle(@PathParam("id") I id) {
+        if (id == null) {
             throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
-        this.repository.delete(I);
+        this.repository.delete(id);
         return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 
