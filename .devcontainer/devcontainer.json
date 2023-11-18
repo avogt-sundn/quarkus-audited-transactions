@@ -50,7 +50,6 @@ rebuil// For format details, see https://aka.ms/devcontainer.json. For config op
             "extensions": [
                 "dbaeumer.vscode-eslint",
                 "vscjava.vscode-java-pack",
-                "esbenp.prettier-vscode",
                 "mhutchie.git-graph",
                 "donjayamanne.githistory",
                 "waderyan.gitblame",
