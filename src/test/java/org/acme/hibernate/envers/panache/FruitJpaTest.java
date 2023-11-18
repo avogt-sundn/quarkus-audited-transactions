@@ -1,10 +1,8 @@
 package org.acme.hibernate.envers.panache;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -22,13 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 /**
- * use non-static fields to hand over from one test to a following.
- * without this annotation each test method receives a new class instance
+ * use non-static fields to hand over from one test to a following. without this
+ * annotation each test method receives a new class instance
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class FruitJpaTest {
 
     final UUID testFruitUuid = java.util.UUID.randomUUID();
+    private int lastNumberOfValuesSeen;
 
     @Test
     @Order(1)
@@ -42,11 +41,9 @@ class FruitJpaTest {
     @Order(5)
     @DisplayName("add to the set")
     void createOne() {
-        Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
-        fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID(), false, "name", "value"));
-        Assertions.assertEquals(1,
-                fruit.getValues().size());
-        FruitJpaTest.log.debug("to database: {}", fruit);
+        Fruit fruit = new Fruit(testFruitUuid, "jpa_fruit", "red");
+        fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID(), false, "number", "0"));
+        Assertions.assertEquals(1, fruit.getValues().size());
         fruit.persist();
     }
 
@@ -55,76 +52,89 @@ class FruitJpaTest {
     @DisplayName("check creation - set mappedBy")
     void checkCreate() {
         final Fruit fruit = Fruit.findById(testFruitUuid);
-        FruitJpaTest.log.debug("from database: {}", fruit);
-        Assertions.assertNotNull(fruit, "");
+        Assertions.assertNotNull(fruit, "got persisted");
         final int size = fruit.getValues().size();
         Assertions.assertEquals(1, size);
     }
 
-
     @Test
     @Order(7)
     @DisplayName("add to the set")
-    void createWithSet_NoBackReference() {
+    void addNutrition() {
 
-        Fruit fruit = new Fruit("cherry", "red");
-        fruit.addNutritions(new NutritionValue("color", "name"));
-
-        Assertions.assertEquals(1,
-                fruit.getValues().size());
-        FruitJpaTest.log.debug("to database: {}", fruit);
+        Fruit fruit = Fruit.findById(testFruitUuid);
+        fruit.addNutritions(new NutritionValue("number", "1"));
         fruit.persist();
-        Assertions.assertNotNull(fruit.id);
-        Assertions.assertNotNull(fruit.getValues().iterator().next().fruit.id);
-
+        Assertions.assertNotNull(fruit.getValues().stream().allMatch(v -> v.fruit.id != null),
+                "backreference is filled");
+        this.lastNumberOfValuesSeen = fruit.values.size();
     }
 
     @Test
-    @Disabled
     @Order(8)
-    @DisplayName("delete from the set")
-    void removeOne() {
-        final Fruit fruit = Fruit.findById(testFruitUuid);
-        FruitJpaTest.log.debug("from database: {}", fruit);
-        Assertions.assertEquals(1, fruit.getValues().size());
-        NutritionValue[] nutritionValues = fruit.getValues().toArray(new NutritionValue[1]);
-        Arrays.stream(nutritionValues).forEach(nutri -> fruit.getValues().remove(nutri));
-        fruit.persist();
-        Assertions.assertEquals(0, fruit.getValues().size());
+    @DisplayName("add to the set")
+    void checkNutrition() {
+        // clear
+        Fruit.getEntityManager().clear();
+        Fruit fruit = Fruit.findById(testFruitUuid);
+        Assertions.assertNotNull(fruit);
+        Assertions.assertEquals(fruit.id, fruit.getValues().iterator().next().fruit.id);
+        Assertions.assertEquals(lastNumberOfValuesSeen, fruit.values.size());
     }
 
     @Test
     @Order(9)
-    @DisplayName("check deletion in the set")
-    void checkDelete() {
+    @DisplayName("delete from the set")
+    void removeFromSet() {
+
         final Fruit fruit = Fruit.findById(testFruitUuid);
-        FruitJpaTest.log.debug("from database: {}", fruit);
-        final int size = fruit.getValues().size();
-        if (size == 1) {
-            fruit.getValues().toArray(new NutritionValue[1])[0].setFruit(null);
-            Panache.getEntityManager().merge(fruit);
-        }
-        Assertions.assertEquals(0, size);
+        NutritionValue[] nutritionValues = fruit.getValues().toArray(new NutritionValue[1]);
+        Assertions.assertEquals(2, nutritionValues.length, "expect to have 2 values");
+
+        fruit.removeNutrition(nutritionValues[0]);
+
+        fruit.persist();
+
+        nutritionValues[0].delete();
+        this.lastNumberOfValuesSeen = fruit.values.size();
     }
 
     @Test
     @Order(10)
-    @DisplayName("check deletion via mappedBy")
-    void checkDelete2() {
+    @DisplayName("check delete from the set")
+    void checkRemoveFromSet() {
+        Panache.getEntityManager().clear();
         final Fruit fruit = Fruit.findById(testFruitUuid);
-        Assertions.assertNotNull(fruit);
-        FruitJpaTest.log.debug("from database: {}", fruit);
         final int size = fruit.getValues().size();
-        Assertions.assertEquals(0, size);
+        Assertions.assertEquals(lastNumberOfValuesSeen, size);
     }
 
     @Test
-    @Order(20)
-    @DisplayName("add 2nd to the collection")
-    void createsecond() {
-        Fruit fruit = new Fruit(testFruitUuid, "cherry", "red");
-        fruit.addNutritions(new NutritionValue(java.util.UUID.randomUUID().randomUUID(), false, "name", "value"));
-        FruitJpaTest.log.debug("from database: {}", fruit);
-        Panache.getEntityManager().merge(fruit);
+    @Order(11)
+    @DisplayName("check entitymanager.clear works")
+    void entityManagerClearWorks() {
+        final Fruit test = Fruit.findById(testFruitUuid);
+        // erase entity beans previously read:
+        Panache.getEntityManager().clear();
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        Assertions.assertNotSame(test, fruit);
     }
+
+    @Test
+    @Order(13)
+    @DisplayName("delete root")
+    void deleteRoot() {
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        fruit.delete();
+    }
+
+    @Test
+    @Order(14)
+    @DisplayName("check delete root")
+    void checkDeleteRoot() {
+        Panache.getEntityManager().clear();
+        final Fruit fruit = Fruit.findById(testFruitUuid);
+        Assertions.assertNull(fruit);
+    }
+
 }

@@ -24,12 +24,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
@@ -37,7 +35,7 @@ import lombok.ToString;
 @Cacheable
 @Data
 @ToString
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 @NoArgsConstructor
 @Audited
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -48,13 +46,12 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
      */
     @Id
     @EqualsAndHashCode.Include
-    @NonNull
+    // @NonNull
     @Column(unique = true)
     UUID id;
     /**
      * only active entities are fetched by queries, representing a current state at
-     * one point in time.
-     * if active is false, this entity is an edited version.
+     * one point in time. if active is false, this entity is an edited version.
      */
     boolean activeRevision;
     Integer editedRevision;
@@ -64,9 +61,9 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     Set<NutritionValue> values;
 
     @Column(length = 40, unique = false)
-    @NotNull
+    // @NotNull
     String name;
-    @NotNull
+    // @NotNull
     String color;
 
     public Fruit(UUID uuid, boolean isActiveRevision, String name, String color) {
@@ -87,8 +84,8 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
         fruit.color = color;
         // if there is a set, copy values into a new set and set reference to the new
         // fruit
-        fruit.values = Optional.ofNullable(values).stream().flatMap(set -> (Stream<NutritionValue>) set.stream())
-                .map(n -> n.copy()).map(n -> {
+        fruit.values = Optional.ofNullable(values).stream()
+                .flatMap(set -> (Stream<NutritionValue>) set.stream()).map(n -> n.copy()).map(n -> {
                     n.fruit = fruit;
                     return n;
                 }).collect(Collectors.toSet());
@@ -130,6 +127,15 @@ public class Fruit extends PanacheEntityBase implements Historizable<UUID> {
     public Fruit(@NonNull String name, String color) {
         this.name = name;
         this.color = color;
+    }
+
+    public void removeNutrition(NutritionValue nutritionValue) {
+        if (this.values != null && nutritionValue != null) {
+            this.values.removeIf(v -> v.equals(nutritionValue));
+            // do not forget to clear the backreference when you want that association be
+            // gone!
+            nutritionValue.fruit = null;
+        }
     }
 
 }

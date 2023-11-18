@@ -16,15 +16,12 @@ import jakarta.persistence.ManyToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 @Entity
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Audited
 @Data
-@RequiredArgsConstructor
 @NoArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class NutritionValue extends PanacheEntityBase implements Historizable<UUID> {
@@ -33,14 +30,10 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
      */
     @Id
     @EqualsAndHashCode.Include
-    @NonNull
     UUID id;
-    @NonNull
     boolean activeRevision;
     Integer editedRevision;
-    @NonNull
     String name;
-    @NonNull
     String value;
 
     @ToString.Exclude
@@ -64,6 +57,13 @@ public class NutritionValue extends PanacheEntityBase implements Historizable<UU
     }
 
     public NutritionValue(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
+
+    public NutritionValue(UUID id, boolean activeRevision, String name, String value) {
+        this.id = id;
+        this.activeRevision = activeRevision;
         this.name = name;
         this.value = value;
     }
