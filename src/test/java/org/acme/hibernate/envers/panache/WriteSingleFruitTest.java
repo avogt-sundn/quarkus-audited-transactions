@@ -78,8 +78,8 @@ class WriteSingleFruitTest {
     @Order(2)
     void initialDataSet() throws JsonProcessingException {
         Fruit fruit = new Fruit(CHERRY_UUID, true, CHERRY_NAME, FruitResourceTest.NO_COLOR);
-        fruit.addNutritions(new NutritionValue(RANDOM_UUID, true, FruitResourceTest.NUTRI_NAME,
-                NUTRITION_IS_HERE));
+        fruit.addNutritions(new NutritionValue(RANDOM_UUID, true,
+                FruitResourceTest.CHERRY_NUTRI_NAME, NUTRITION_IS_HERE));
         createNew(fruit);
 
         NutritionValue nutri = (NutritionValue) NutritionValue.findById(RANDOM_UUID);

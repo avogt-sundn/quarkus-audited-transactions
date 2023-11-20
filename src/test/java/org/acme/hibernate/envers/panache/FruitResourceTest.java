@@ -49,7 +49,7 @@ class FruitResourceTest {
     final static String CHERRY_COLOR = "red";
     final static String CHANGED_COLOR = "_changed_color";
     final static String CHANGED_COLOR_2ND = "_2nd_changed_color";
-    static final String NUTRI_NAME = "_nutri_name";
+    static final String CHERRY_NUTRI_NAME = "cherry_nutri_name";
 
     @BeforeAll
     static void initAll() {
@@ -82,8 +82,8 @@ class FruitResourceTest {
     @Order(2)
     void initialDataSet() throws JsonProcessingException {
         Fruit fruit = new Fruit(CHERRY_UUID, true, CHERRY_NAME, FruitResourceTest.NO_COLOR);
-        fruit.addNutritions(new NutritionValue(RANDOM_UUID, true, FruitResourceTest.NUTRI_NAME,
-                NUTRITION_IS_HERE));
+        fruit.addNutritions(new NutritionValue(RANDOM_UUID, true,
+                FruitResourceTest.CHERRY_NUTRI_NAME, NUTRITION_IS_HERE));
         createNew(fruit);
 
         NutritionValue nutri = (NutritionValue) NutritionValue.findById(RANDOM_UUID);
