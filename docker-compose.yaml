@@ -1,25 +1,52 @@
-version: '2.0'
+version: "2.0"
+networks:
+  default:
+    name: docker-default-network
+    external: true
 
 services:
 
-  postgresql:
-    image: quay.io/coreos/postgres:latest
-    ports:
-      - "5432:5432"
+  postgres:
+    image: postgres:14.1
     environment:
       POSTGRES_USER: quarkus_test
       POSTGRES_PASSWORD: quarkus_test
       POSTGRES_DB: quarkus_test
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    mem_limit: 512m
+    mem_reservation: 128m
+
+  adminer:
+    image: adminer
+    ports:
+      - 9009:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    expose:
+      - 80
+    mem_limit: 512m
+    mem_reservation: 128M
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     ports:
       - "8181:8080"
+    command:
+      - start-dev
+      - --import-realm
     environment:
-      KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: admin
-      KEYCLOAK_IMPORT: "/tmp/realm.json -Dkeycloak.profile.feature.upload_scripts=enabled"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
       DB_VENDOR: h2
 
     volumes:
-      - ./src/test/resources/docker-compose/keycloak-import.json:/tmp/realm.json
+      - ./src/test/resources/docker-compose/keycloak-import.json:/opt/keycloak/data/import

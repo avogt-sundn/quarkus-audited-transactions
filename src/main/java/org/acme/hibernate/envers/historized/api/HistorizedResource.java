@@ -1,28 +1,37 @@
 package org.acme.hibernate.envers.historized.api;
 
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+
 import org.acme.hibernate.envers.historized.impl.HistorizedRepository;
 import org.acme.hibernate.envers.historized.impl.HistoryList;
 
-import javax.json.Json;
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-import java.util.Optional;
+import jakarta.json.Json;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
+ * You will derive your domain specific resource from here. Make sure to add the
+ * basic path so that the partial pathes here become available:
+ *
+ * <pre>
+ * @Path("fruit")
+ * public class FruitResource extends HistorizedResource<Fruit,UUID> { }
+ * </pre>
+ *
  * @param <T> Entity type
  * @param <I> primary key / id type
  */
@@ -132,11 +141,11 @@ public class HistorizedResource<T extends Historizable<I>, I> {
     @DELETE
     @Path("{id}")
     @Transactional
-    public Response deleteSingle(@PathParam("id") I I) {
-        if (I == null) {
+    public Response deleteSingle(@PathParam("id") I id) {
+        if (id == null) {
             throw new WebApplicationException("id was missing on request.", Response.Status.BAD_REQUEST);
         }
-        this.repository.delete(I);
+        this.repository.delete(id);
         return Response.ok().status(Response.Status.NO_CONTENT).build();
     }
 

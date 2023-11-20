@@ -1,20 +1,20 @@
 package org.acme.hibernate.envers.panache;
 
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+
 import org.acme.hibernate.envers.historized.api.HistorizedResource;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.UUID;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import lombok.NoArgsConstructor;
 
 ;
 
@@ -24,7 +24,6 @@ import java.util.UUID;
 @Transactional
 @RequestScoped
 @NoArgsConstructor
-@Slf4j
 public class FruitResource extends HistorizedResource<Fruit, UUID> {
 
     @Inject
@@ -33,8 +32,9 @@ public class FruitResource extends HistorizedResource<Fruit, UUID> {
     }
 
     @GET
-    public List<Fruit> list() {
-        return Fruit.findAll().list();
+    @Path("{id}/nohist")
+    public Fruit getById(@PathParam("id") UUID id) {
+        return Fruit.findById(id);
     }
 
 }

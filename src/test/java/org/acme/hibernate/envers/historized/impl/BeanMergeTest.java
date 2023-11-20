@@ -1,14 +1,14 @@
 package org.acme.hibernate.envers.historized.impl;
 
+import java.util.UUID;
+
 import org.acme.hibernate.envers.panache.Fruit;
 import org.acme.hibernate.envers.panache.NutritionValue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
-public class BeanMergeTest {
+class BeanMergeTest {
     @Test
     @DisplayName("overlay wins")
     void a() {
@@ -60,7 +60,7 @@ public class BeanMergeTest {
     }
 
     private Fruit getFruit(UUID id, String name, String color) {
-        Fruit a = new Fruit();
+        Fruit a = new Fruit(id, false, name, color);
         a.setId(id);
         a.setName(name);
         a.setColor(color);

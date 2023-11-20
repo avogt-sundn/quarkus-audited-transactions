@@ -1,0 +1,65 @@
+rebuil// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.217.4/containers/azure-functions-java-11
+{
+    "name": "Java 17 Node LTS",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            // Update the VARIANT arg to pick a Java version: 8, 11, 17
+            // Append -bullseye or -buster to pin to an OS version.
+            // Use the -bullseye variants on local arm64/Apple Silicon.
+            "VARIANT": "17-bullseye",
+            // Options
+            // no maven here: use maven wrapper instead `./mvnw`
+            "INSTALL_MAVEN": "false",
+            "MAVEN_VERSION": "3.8.6",
+            "INSTALL_GRADLE": "false",
+            "NODE_VERSION": "lts/*"
+        }
+    },
+    "forwardPorts": [
+        7071
+    ],
+    "mounts": [
+        "source=localcache,target=/home/vscode/.m2,type=volume",
+        "source=localcache,target=/home/vscode/.npm,type=volume"
+        //        "source=${localEnv:HOME}/.vscode/.zsh_history,target=/home/vscode/.zsh_history,type=bind",
+        //        "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,type=bind"
+    ],
+    // Add the IDs of extensions you want installed when the container is created.
+    "containerEnv": {
+        "GRAALVM_HOME": "/opt/mandrel",
+        "JAVA_HOME": "/usr/lib/jvm/msopenjdk-current",
+        "CHROME_BIN": "/usr/bin/chromium",
+        // when in a container use hostname, otherwise localhost
+        "DB_HOST": "postgres"
+    },
+    // Use 'initializeCommand' to run commands on the host before container gets created.
+    "initializeCommand": "docker network create docker-default-network || echo Fine. Using existing network.",
+    "postStartCommand": "./.devcontainer/postStartCommand.sh",
+    "runArgs": [
+        "--network=docker-default-network",
+        "--hostname=${localWorkspaceFolderBasename}"
+    ], // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "vscjava.vscode-java-pack",
+                "mhutchie.git-graph",
+                "donjayamanne.githistory",
+                "waderyan.gitblame",
+                "SonarSource.sonarlint-vscode",
+                "DotJoshJohnson.xml",
+                "redhat.vscode-xml",
+                "redhat.vscode-quarkus",
+                "Angular.ng-template",
+                "ms-azuretools.vscode-docker"
+            ],
+        }
+    }
+}
